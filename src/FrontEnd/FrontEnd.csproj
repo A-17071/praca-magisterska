@@ -6,4 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\ModulKalkulacyjny\ModulKalkulacyjny.csproj" />
+        <PackageReference Include="Radzen.Blazor" Version="*" />
+    </ItemGroup>
+
 </Project>

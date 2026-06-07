@@ -1,10 +1,18 @@
 using FrontEnd.Components;
+using ModulKalkulacyjny;
+using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add Razor components with interactive server rendering.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register the electromagnetic field calculator as a singleton (it is stateless).
+builder.Services.AddSingleton<ElectromagneticFieldCalculator>();
+
+// Register Radzen component services (required for charts and other Radzen components).
+builder.Services.AddRadzenComponents();
 
 var app = builder.Build();
 

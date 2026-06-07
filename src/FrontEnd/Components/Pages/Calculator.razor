@@ -1,0 +1,544 @@
+@page "/calculator"
+@rendermode InteractiveServer
+@inject ElectromagneticFieldCalculator FieldCalculator
+
+<PageTitle>EM Field Calculator</PageTitle>
+
+<h2 class="mb-4">Electromagnetic Field Calculator</h2>
+
+@if (_errorMessage is not null)
+{
+    <div class="alert alert-danger alert-dismissible">
+        <strong>Error:</strong> @_errorMessage
+        <button class="btn-close" @onclick="() => _errorMessage = null"></button>
+    </div>
+}
+
+<!-- ═══════════════════════ 1. CONDUCTORS ═══════════════════════ -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">1. Conductors</h5>
+        <button class="btn btn-sm btn-outline-secondary" @onclick="LoadDefaultConductors">
+            Load 3-phase example
+        </button>
+    </div>
+    <div class="card-body p-2">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-2">
+                <thead class="table-light">
+                    <tr>
+                        <th>Id</th>
+                        <th>x [m]</th>
+                        <th>y [m]</th>
+                        <th>r [m]</th>
+                        <th>U [V]</th>
+                        <th>φU [°]</th>
+                        <th>I [A]</th>
+                        <th>φI [°]</th>
+                        <th title="Include in electric field">E?</th>
+                        <th title="Include in magnetic field">B?</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in _conductors)
+                    {
+                        <tr>
+                            <td><input class="form-control form-control-sm" style="width:50px" @bind="c.Id" /></td>
+                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.X" /></td>
+                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.Y" /></td>
+                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.Radius" /></td>
+                            <td><input class="form-control form-control-sm" style="width:100px" @bind="c.VoltageRms" /></td>
+                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.VoltageAngle" /></td>
+                            <td><input class="form-control form-control-sm" style="width:100px" @bind="c.CurrentRms" /></td>
+                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.CurrentAngle" /></td>
+                            <td class="text-center"><input type="checkbox" @bind="c.IncludeE" /></td>
+                            <td class="text-center"><input type="checkbox" @bind="c.IncludeB" /></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => _conductors.Remove(c)">✕</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" @onclick="AddConductor">+ Add conductor</button>
+    </div>
+</div>
+
+<!-- ═══════════════════════ 2. OBSERVATION ══════════════════════ -->
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">2. Observation</h5></div>
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="modePoint" name="mode"
+                       checked="@(_mode == ObsMode.SinglePoint)"
+                       @onchange="() => _mode = ObsMode.SinglePoint" />
+                <label class="form-check-label" for="modePoint">Single point</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="modeProfile" name="mode"
+                       checked="@(_mode == ObsMode.Profile)"
+                       @onchange="() => _mode = ObsMode.Profile" />
+                <label class="form-check-label" for="modeProfile">Horizontal profile</label>
+            </div>
+        </div>
+
+        @if (_mode == ObsMode.SinglePoint)
+        {
+            <div class="row g-2">
+                <div class="col-auto">
+                    <label class="col-form-label">x [m]</label>
+                    <input class="form-control form-control-sm" style="width:100px" @bind="_ptX" />
+                </div>
+                <div class="col-auto">
+                    <label class="col-form-label">y [m]</label>
+                    <input class="form-control form-control-sm" style="width:100px" @bind="_ptY" />
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-2">
+                <div class="col-auto">
+                    <label class="col-form-label">y [m]</label>
+                    <input class="form-control form-control-sm" style="width:90px" @bind="_profY" />
+                </div>
+                <div class="col-auto">
+                    <label class="col-form-label">x min [m]</label>
+                    <input class="form-control form-control-sm" style="width:90px" @bind="_profXMin" />
+                </div>
+                <div class="col-auto">
+                    <label class="col-form-label">x max [m]</label>
+                    <input class="form-control form-control-sm" style="width:90px" @bind="_profXMax" />
+                </div>
+                <div class="col-auto">
+                    <label class="col-form-label">Steps</label>
+                    <input class="form-control form-control-sm" style="width:80px" @bind="_profSteps" />
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ═══════════════════════ 3. EXPOSURE STATES (OPTIONAL) ═══════ -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">3. Exposure (optional)</h5>
+        <div class="d-flex align-items-center gap-3">
+            <span>Exponent p =</span>
+            <input class="form-control form-control-sm" style="width:70px" @bind="_exponentP" />
+            <button class="btn btn-sm btn-outline-secondary" @onclick="AddState">+ Add state</button>
+        </div>
+    </div>
+    @if (_states.Count > 0)
+    {
+        <div class="card-body p-2">
+            <p class="text-muted small mb-2">
+                Each state overrides the conductor voltages and currents for the given duration.
+                U and I columns follow the same order as the Conductors table.
+            </p>
+            @foreach (var (state, si) in _states.Select((s, i) => (s, i)))
+            {
+                <div class="border rounded p-2 mb-2">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <strong>State @(si + 1)</strong>
+                        <label>Duration [s]</label>
+                        <input class="form-control form-control-sm" style="width:100px"
+                               @bind="state.DurationSeconds" />
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => _states.Remove(state)">Remove</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Conductor</th>
+                                    <th>U [V]</th>
+                                    <th>φU [°]</th>
+                                    <th>I [A]</th>
+                                    <th>φI [°]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cd in state.ConductorData)
+                                {
+                                    <tr>
+                                        <td>@cd.Id</td>
+                                        <td><input class="form-control form-control-sm" style="width:100px" @bind="cd.VoltageRms" /></td>
+                                        <td><input class="form-control form-control-sm" style="width:80px" @bind="cd.VoltageAngle" /></td>
+                                        <td><input class="form-control form-control-sm" style="width:100px" @bind="cd.CurrentRms" /></td>
+                                        <td><input class="form-control form-control-sm" style="width:80px" @bind="cd.CurrentAngle" /></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- ═══════════════════════ ACTION BUTTONS ══════════════════════ -->
+<div class="d-flex gap-2 mb-4">
+    <button class="btn btn-primary" @onclick="CalculateField">Calculate Field</button>
+    @if (_states.Count > 0)
+    {
+        <button class="btn btn-secondary" @onclick="CalculateExposure">Calculate Exposure</button>
+    }
+</div>
+
+<!-- ═══════════════════════ 4. FIELD RESULTS ════════════════════ -->
+@if (_fieldResults is not null)
+{
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Field Results</h5></div>
+        <div class="card-body p-2">
+            @if (_mode == ObsMode.SinglePoint)
+            {
+                var r = _fieldResults[0];
+                <table class="table table-sm table-bordered" style="max-width:500px">
+                    <tbody>
+                        <tr><th colspan="2" class="table-light">Electric field at (@r.Point.X:F2 m, @r.Point.Y:F2 m)</th></tr>
+                        <tr><td>Ex (complex) [V/m]</td><td>@FormatComplex(r.Ex)</td></tr>
+                        <tr><td>Ey (complex) [V/m]</td><td>@FormatComplex(r.Ey)</td></tr>
+                        <tr><td><strong>E (RMS) [V/m]</strong></td><td><strong>@r.E.ToString("G4")</strong></td></tr>
+                        <tr><th colspan="2" class="table-light">Magnetic flux density</th></tr>
+                        <tr><td>Bx (complex) [µT]</td><td>@FormatComplex(r.Bx * 1e6)</td></tr>
+                        <tr><td>By (complex) [µT]</td><td>@FormatComplex(r.By * 1e6)</td></tr>
+                        <tr><td><strong>B (RMS) [µT]</strong></td><td><strong>@((r.B * 1e6).ToString("G4"))</strong></td></tr>
+                        <tr><th colspan="2" class="table-light">Magnetic field strength</th></tr>
+                        <tr><td>Hx (complex) [A/m]</td><td>@FormatComplex(r.Hx)</td></tr>
+                        <tr><td>Hy (complex) [A/m]</td><td>@FormatComplex(r.Hy)</td></tr>
+                        <tr><td><strong>H (RMS) [A/m]</strong></td><td><strong>@r.H.ToString("G4")</strong></td></tr>
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>x [m]</th>
+                                <th>E [V/m]</th>
+                                <th>B [µT]</th>
+                                <th>H [A/m]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in _fieldResults)
+                            {
+                                <tr>
+                                    <td>@r.Point.X.ToString("F1")</td>
+                                    <td>@r.E.ToString("G4")</td>
+                                    <td>@((r.B * 1e6).ToString("G4"))</td>
+                                    <td>@r.H.ToString("G4")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <!-- RadzenChart – Electric field and Magnetic field strength side by side -->
+                <div class="row mt-3 g-3">
+                    <div class="col-12 col-xl-6">
+                        <h6 class="text-center fw-bold" style="color:#1a237e">Electric Field over Distance</h6>
+                        <RadzenChart Style="height:300px">
+                            <RadzenLineSeries Data="@_ePlotData"
+                                              CategoryProperty="X"
+                                              ValueProperty="Y"
+                                              Title="E [V/m]"
+                                              Smooth="true"
+                                              LineType="LineType.Solid"
+                                              Stroke="#1a237e"
+                                              StrokeWidth="2">
+                                <RadzenMarkers MarkerType="MarkerType.None" />
+                            </RadzenLineSeries>
+                            <RadzenCategoryAxis FormatString="{0:F0}">
+                                <RadzenAxisTitle Text="Distance from centre line [m]" />
+                            </RadzenCategoryAxis>
+                            <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                <RadzenAxisTitle Text="E [V/m]" />
+                                <RadzenGridLines Visible="true" />
+                            </RadzenValueAxis>
+                        </RadzenChart>
+                    </div>
+                    <div class="col-12 col-xl-6">
+                        <h6 class="text-center fw-bold" style="color:#006064">Magnetic Field Strength over Distance</h6>
+                        <RadzenChart Style="height:300px">
+                            <RadzenLineSeries Data="@_hPlotData"
+                                              CategoryProperty="X"
+                                              ValueProperty="Y"
+                                              Title="H [A/m]"
+                                              Smooth="true"
+                                              LineType="LineType.Solid"
+                                              Stroke="#006064"
+                                              StrokeWidth="2">
+                                <RadzenMarkers MarkerType="MarkerType.None" />
+                            </RadzenLineSeries>
+                            <RadzenCategoryAxis FormatString="{0:F0}">
+                                <RadzenAxisTitle Text="Distance from centre line [m]" />
+                            </RadzenCategoryAxis>
+                            <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                <RadzenAxisTitle Text="H [A/m]" />
+                                <RadzenGridLines Visible="true" />
+                            </RadzenValueAxis>
+                        </RadzenChart>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- ═══════════════════════ 5. EXPOSURE RESULTS ═════════════════ -->
+@if (_exposureResults is not null)
+{
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Exposure Results</h5></div>
+        <div class="card-body p-2">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>x [m]</th>
+                            <th>y [m]</th>
+                            <th>EDEPE</th>
+                            <th>EDEPM_B</th>
+                            <th>EDEPM_H</th>
+                            <th>E avg [V/m]</th>
+                            <th>E eq [V/m]</th>
+                            <th>B avg [µT]</th>
+                            <th>B eq [µT]</th>
+                            <th>H avg [A/m]</th>
+                            <th>H eq [A/m]</th>
+                            <th>E max [V/m]</th>
+                            <th>E min [V/m]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in _exposureResults)
+                        {
+                            <tr>
+                                <td>@r.Point.X.ToString("F1")</td>
+                                <td>@r.Point.Y.ToString("F1")</td>
+                                <td>@r.Edepe.ToString("G4")</td>
+                                <td>@r.EdepmB.ToString("G4")</td>
+                                <td>@r.EdepmH.ToString("G4")</td>
+                                <td>@r.EAverage.ToString("G4")</td>
+                                <td>@r.EEquivalent.ToString("G4")</td>
+                                <td>@((r.BAverage * 1e6).ToString("G4"))</td>
+                                <td>@((r.BEquivalent * 1e6).ToString("G4"))</td>
+                                <td>@r.HAverage.ToString("G4")</td>
+                                <td>@r.HEquivalent.ToString("G4")</td>
+                                <td>@r.EMax.ToString("G4")</td>
+                                <td>@r.EMin.ToString("G4")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    // ── View models ───────────────────────────────────────────────────────────
+
+    /// <summary>Flat UI representation of one conductor.</summary>
+    private class ConductorModel
+    {
+        public string Id           { get; set; } = "?";
+        public double X            { get; set; }
+        public double Y            { get; set; } = 12;
+        public double Radius       { get; set; } = 0.015;
+        public double VoltageRms   { get; set; }
+        public double VoltageAngle { get; set; }
+        public double CurrentRms   { get; set; }
+        public double CurrentAngle { get; set; }
+        public bool   IncludeE     { get; set; } = true;
+        public bool   IncludeB     { get; set; } = true;
+    }
+
+    /// <summary>Per-conductor data for one exposure operating state.</summary>
+    private class ConductorStateModel
+    {
+        public string Id           { get; set; } = "";
+        public double VoltageRms   { get; set; }
+        public double VoltageAngle { get; set; }
+        public double CurrentRms   { get; set; }
+        public double CurrentAngle { get; set; }
+    }
+
+    /// <summary>One operating state for the exposure calculation.</summary>
+    private class StateModel
+    {
+        public double DurationSeconds          { get; set; } = 3600;
+        public List<ConductorStateModel> ConductorData { get; set; } = new();
+    }
+
+    private enum ObsMode { SinglePoint, Profile }
+
+    // ── State ─────────────────────────────────────────────────────────────────
+
+    private List<ConductorModel> _conductors = new();
+
+    private ObsMode _mode     = ObsMode.Profile;
+    private double  _ptX;
+    private double  _ptY      = 1;
+    private double  _profY    = 1;
+    private double  _profXMin = -50;
+    private double  _profXMax =  50;
+    private int     _profSteps = 101;
+
+    private List<StateModel> _states   = new();
+    private double           _exponentP = 1.0;
+
+    private IReadOnlyList<FieldResult>?    _fieldResults;
+    private IReadOnlyList<ExposureResult>? _exposureResults;
+    private string?                        _errorMessage;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    protected override void OnInitialized() => LoadDefaultConductors();
+
+    // ── Conductor helpers ─────────────────────────────────────────────────────
+
+    private void LoadDefaultConductors()
+    {
+        double vRms = 110_000.0 / Math.Sqrt(3);
+        _conductors =
+        [
+            new() { Id = "A", X = -4, Y = 12, Radius = 0.015, VoltageRms = vRms, VoltageAngle =    0, CurrentRms = 400, CurrentAngle =    0 },
+            new() { Id = "B", X =  0, Y = 12, Radius = 0.015, VoltageRms = vRms, VoltageAngle = -120, CurrentRms = 400, CurrentAngle = -120 },
+            new() { Id = "C", X =  4, Y = 12, Radius = 0.015, VoltageRms = vRms, VoltageAngle =  120, CurrentRms = 400, CurrentAngle =  120 },
+        ];
+        _states.Clear();
+        _fieldResults    = null;
+        _exposureResults = null;
+        _ePlotData       = null;
+        _hPlotData       = null;
+        _errorMessage    = null;
+    }
+
+    private void AddConductor()
+        => _conductors.Add(new ConductorModel { Id = $"C{_conductors.Count + 1}" });
+
+    // ── Exposure state helpers ────────────────────────────────────────────────
+
+    private void AddState()
+    {
+        var state = new StateModel
+        {
+            ConductorData = _conductors.Select(c => new ConductorStateModel
+            {
+                Id           = c.Id,
+                VoltageRms   = c.VoltageRms,
+                VoltageAngle = c.VoltageAngle,
+                CurrentRms   = c.CurrentRms,
+                CurrentAngle = c.CurrentAngle
+            }).ToList()
+        };
+        _states.Add(state);
+    }
+
+    // ── Calculation ───────────────────────────────────────────────────────────
+
+    private void CalculateField()
+    {
+        _errorMessage    = null;
+        _fieldResults    = null;
+        _exposureResults = null;
+        _ePlotData       = null;
+        _hPlotData       = null;
+
+        try
+        {
+            var conductors = BuildConductors();
+            var points     = BuildPoints();
+            _fieldResults  = FieldCalculator.CalculateField(conductors, points);
+
+            // Build flat plot-data lists for the Radzen charts
+            if (_mode == ObsMode.Profile && _fieldResults is not null)
+            {
+                _ePlotData = _fieldResults.Select(r => new PlotPoint(r.Point.X, r.E)).ToList();
+                _hPlotData = _fieldResults.Select(r => new PlotPoint(r.Point.X, r.H)).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void CalculateExposure()
+    {
+        _errorMessage    = null;
+        _exposureResults = null;
+
+        try
+        {
+            var conductors = BuildConductors();
+            var points     = BuildPoints();
+            var states     = BuildStates();
+            _exposureResults = FieldCalculator.CalculateExposure(conductors, points, states, _exponentP);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    // ── Build domain objects from view models ─────────────────────────────────
+
+    private List<Conductor> BuildConductors()
+        => _conductors.Select(c => new Conductor
+        {
+            Id                    = c.Id,
+            X                     = c.X,
+            Y                     = c.Y,
+            Radius                = c.Radius,
+            Voltage               = ElectromagneticFieldCalculator.Phasor(c.VoltageRms, c.VoltageAngle),
+            Current               = ElectromagneticFieldCalculator.Phasor(c.CurrentRms, c.CurrentAngle),
+            IncludeInElectricField = c.IncludeE,
+            IncludeInMagneticField = c.IncludeB
+        }).ToList();
+
+    private List<ObservationPoint> BuildPoints()
+    {
+        if (_mode == ObsMode.SinglePoint)
+            return [new(_ptX, _ptY)];
+
+        int steps = Math.Max(_profSteps, 2);
+        double dx = (_profXMax - _profXMin) / (steps - 1);
+        return Enumerable.Range(0, steps)
+            .Select(i => new ObservationPoint(_profXMin + i * dx, _profY))
+            .ToList();
+    }
+
+    private List<OperatingState> BuildStates()
+        => _states.Select(s => new OperatingState
+        {
+            DurationSeconds = s.DurationSeconds,
+            Voltages = s.ConductorData.Select(cd =>
+                ElectromagneticFieldCalculator.Phasor(cd.VoltageRms, cd.VoltageAngle)).ToList(),
+            Currents = s.ConductorData.Select(cd =>
+                ElectromagneticFieldCalculator.Phasor(cd.CurrentRms, cd.CurrentAngle)).ToList()
+        }).ToList();
+
+    // ── Formatting helpers ────────────────────────────────────────────────────
+
+    private static string FormatComplex(Complex c)
+        => $"{c.Real:G4} + j{c.Imaginary:G4}";
+
+    // ── Chart data ────────────────────────────────────────────────────────────
+
+    /// <summary>Flat x/y pair used by RadzenLineSeries (avoids nested-property reflection issues).</summary>
+    private record PlotPoint(double X, double Y);
+
+    private List<PlotPoint>? _ePlotData;
+    private List<PlotPoint>? _hPlotData;
+}
+
