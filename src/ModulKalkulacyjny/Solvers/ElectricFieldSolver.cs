@@ -1,6 +1,7 @@
 using System.Numerics;
+using ModulKalkulacyjny.Domain;
 
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Solvers;
 
 /// <summary>
 /// Solves for line charge density phasors and calculates the electric field.

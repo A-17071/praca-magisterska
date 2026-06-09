@@ -1,5 +1,6 @@
 using FrontEnd.Components;
 using ModulKalkulacyjny;
+using ModulKalkulacyjny.Solvers;
 using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);

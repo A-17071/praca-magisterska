@@ -1,4 +1,4 @@
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Domain;
 
 /// <summary>Physical constants used throughout the electromagnetic field calculation.</summary>
 public static class PhysicalConstants

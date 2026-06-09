@@ -1,4 +1,7 @@
-﻿namespace ModulKalkulacyjny;
+﻿using ModulKalkulacyjny.Domain;
+using ModulKalkulacyjny.Solvers;
+
+namespace ModulKalkulacyjny;
 
 /// <summary>
 /// Ready-made test conductors matching the balanced three-phase scenario

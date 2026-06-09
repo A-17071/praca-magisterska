@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Solvers;
 
 /// <summary>
 /// Solves a real square linear system A · x = b where b (and therefore x) is a complex vector.

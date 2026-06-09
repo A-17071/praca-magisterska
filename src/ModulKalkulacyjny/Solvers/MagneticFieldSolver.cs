@@ -1,6 +1,7 @@
 using System.Numerics;
+using ModulKalkulacyjny.Domain;
 
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Solvers;
 
 /// <summary>
 /// Calculates the magnetic flux density B and magnetic field strength H

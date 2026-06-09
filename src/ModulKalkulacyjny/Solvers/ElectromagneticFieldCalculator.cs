@@ -1,6 +1,8 @@
 using System.Numerics;
+using ModulKalkulacyjny.Domain;
+using ModulKalkulacyjny.Helpers;
 
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Solvers;
 
 /// <summary>
 /// Main public API for the electromagnetic field calculation engine.

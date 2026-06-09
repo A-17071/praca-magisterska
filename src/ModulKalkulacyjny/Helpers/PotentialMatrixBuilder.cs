@@ -1,4 +1,6 @@
-namespace ModulKalkulacyjny;
+using ModulKalkulacyjny.Domain;
+
+namespace ModulKalkulacyjny.Helpers;
 
 /// <summary>
 /// Builds the Maxwell potential coefficient matrix P used in the electric field calculation.

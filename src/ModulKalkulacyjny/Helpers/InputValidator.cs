@@ -1,4 +1,6 @@
-namespace ModulKalkulacyjny;
+using ModulKalkulacyjny.Domain;
+
+namespace ModulKalkulacyjny.Helpers;
 
 /// <summary>
 /// Validates all input data before starting a calculation.

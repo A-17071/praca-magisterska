@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
 /// One time interval during which conductor voltage and current phasors are constant.

@@ -1,4 +1,4 @@
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
 /// A point in the 2-D cross-section where the field is to be evaluated.

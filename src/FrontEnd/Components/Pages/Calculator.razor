@@ -1,4 +1,7 @@
 @page "/calculator"
+@using ModulKalkulacyjny.Domain
+@using ModulKalkulacyjny.Helpers
+@using ModulKalkulacyjny.Solvers
 @rendermode InteractiveServer
 @inject ElectromagneticFieldCalculator FieldCalculator
 
@@ -30,7 +33,10 @@
                         <th>Id</th>
                         <th>x [m]</th>
                         <th>y [m]</th>
-                        <th>r [m]</th>
+                        <th>Bundle</th>
+                        <th>r<sub>s</sub> [m]</th>
+                        <th>s [m]</th>
+                        <th title="Computed equivalent radius, read-only">r<sub>eq</sub> [m]</th>
                         <th>U [V]</th>
                         <th>φU [°]</th>
                         <th>I [A]</th>
@@ -45,13 +51,31 @@
                     {
                         <tr>
                             <td><input class="form-control form-control-sm" style="width:50px" @bind="c.Id" /></td>
-                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.X" /></td>
-                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.Y" /></td>
-                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.Radius" /></td>
-                            <td><input class="form-control form-control-sm" style="width:100px" @bind="c.VoltageRms" /></td>
-                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.VoltageAngle" /></td>
-                            <td><input class="form-control form-control-sm" style="width:100px" @bind="c.CurrentRms" /></td>
-                            <td><input class="form-control form-control-sm" style="width:80px" @bind="c.CurrentAngle" /></td>
+                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.X" /></td>
+                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.Y" /></td>
+                            <td>
+                                <select class="form-select form-select-sm" style="width:120px" @bind="c.Bundle">
+                                    <option value="@BundleType.Single">Single</option>
+                                    <option value="@BundleType.Twin">Twin</option>
+                                    <option value="@BundleType.TripleTriangle">Triple (△)</option>
+                                    <option value="@BundleType.QuadSquare">Quad (□)</option>
+                                </select>
+                            </td>
+                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.SubRadius" /></td>
+                            <td>
+                                <input class="form-control form-control-sm" style="width:75px"
+                                       @bind="c.Spacing"
+                                       disabled="@(c.Bundle == BundleType.Single)" />
+                            </td>
+                            <td>
+                                <input style="width:80px" class="form-control form-control-sm text-muted bg-light"
+                                       value="@c.EquivalentRadius.ToString("G4")"
+                                       readonly="readonly" />
+                            </td>
+                            <td><input class="form-control form-control-sm" style="width:95px" @bind="c.VoltageRms" /></td>
+                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.VoltageAngle" /></td>
+                            <td><input class="form-control form-control-sm" style="width:95px" @bind="c.CurrentRms" /></td>
+                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.CurrentAngle" /></td>
                             <td class="text-center"><input type="checkbox" @bind="c.IncludeE" /></td>
                             <td class="text-center"><input type="checkbox" @bind="c.IncludeB" /></td>
                             <td>
@@ -122,71 +146,43 @@
     </div>
 </div>
 
-<!-- ═══════════════════════ 3. EXPOSURE STATES (OPTIONAL) ═══════ -->
+<!-- ═══════════════════════ 3. EXPOSURE SETTINGS ════════════════ -->
 <div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">3. Exposure (optional)</h5>
-        <div class="d-flex align-items-center gap-3">
-            <span>Exponent p =</span>
-            <input class="form-control form-control-sm" style="width:70px" @bind="_exponentP" />
-            <button class="btn btn-sm btn-outline-secondary" @onclick="AddState">+ Add state</button>
+    <div class="card-header"><h5 class="mb-0">3. Exposure Settings</h5></div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label class="form-label mb-1">Exposure time T [h]</label>
+                <input class="form-control form-control-sm" style="width:110px" @bind="_exposureTimeHours" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-1">Exponent p</label>
+                <input class="form-control form-control-sm" style="width:80px" @bind="_exponentP" />
+            </div>
+            <div class="col-auto text-muted small pb-1">
+                T = @((int)(_exposureTimeHours * 3600)) s
+            </div>
+        </div>
+        <div class="mt-2 text-muted small">
+            <strong>Constant-field simplification:</strong>
+            MEDEPE<sub>i</sub> = E<sub>i</sub><sup>p</sup> · T &nbsp;|&nbsp;
+            MEDEPM<sub>H,i</sub> = H<sub>i</sub><sup>p</sup> · T &nbsp;|&nbsp;
+            E<sub>eq</sub> = (MEDEPE / T)<sup>1/p</sup> &nbsp;|&nbsp;
+            H<sub>eq</sub> = (MEDEPM<sub>H</sub> / T)<sup>1/p</sup>
+        </div>
+        <div class="mt-1 text-muted small">
+            Recommended: p = 2 (energetic interpretation, higher weight to peak values).
+            p = 1 gives the time-averaged field.
         </div>
     </div>
-    @if (_states.Count > 0)
-    {
-        <div class="card-body p-2">
-            <p class="text-muted small mb-2">
-                Each state overrides the conductor voltages and currents for the given duration.
-                U and I columns follow the same order as the Conductors table.
-            </p>
-            @foreach (var (state, si) in _states.Select((s, i) => (s, i)))
-            {
-                <div class="border rounded p-2 mb-2">
-                    <div class="d-flex align-items-center gap-3 mb-2">
-                        <strong>State @(si + 1)</strong>
-                        <label>Duration [s]</label>
-                        <input class="form-control form-control-sm" style="width:100px"
-                               @bind="state.DurationSeconds" />
-                        <button class="btn btn-sm btn-outline-danger" @onclick="() => _states.Remove(state)">Remove</button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Conductor</th>
-                                    <th>U [V]</th>
-                                    <th>φU [°]</th>
-                                    <th>I [A]</th>
-                                    <th>φI [°]</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var cd in state.ConductorData)
-                                {
-                                    <tr>
-                                        <td>@cd.Id</td>
-                                        <td><input class="form-control form-control-sm" style="width:100px" @bind="cd.VoltageRms" /></td>
-                                        <td><input class="form-control form-control-sm" style="width:80px" @bind="cd.VoltageAngle" /></td>
-                                        <td><input class="form-control form-control-sm" style="width:100px" @bind="cd.CurrentRms" /></td>
-                                        <td><input class="form-control form-control-sm" style="width:80px" @bind="cd.CurrentAngle" /></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            }
-        </div>
-    }
 </div>
 
 <!-- ═══════════════════════ ACTION BUTTONS ══════════════════════ -->
 <div class="d-flex gap-2 mb-4">
     <button class="btn btn-primary" @onclick="CalculateField">Calculate Field</button>
-    @if (_states.Count > 0)
-    {
-        <button class="btn btn-secondary" @onclick="CalculateExposure">Calculate Exposure</button>
-    }
+    <button class="btn btn-secondary" @onclick="CalculateExposure" disabled="@(_fieldResults is null)">
+        Calculate Exposure
+    </button>
 </div>
 
 <!-- ═══════════════════════ 4. FIELD RESULTS ════════════════════ -->
@@ -293,52 +289,133 @@
 }
 
 <!-- ═══════════════════════ 5. EXPOSURE RESULTS ═════════════════ -->
-@if (_exposureResults is not null)
+@if (_exposureData is not null)
 {
     <div class="card mb-3">
-        <div class="card-header"><h5 class="mb-0">Exposure Results</h5></div>
+        <div class="card-header">
+            <h5 class="mb-0">
+                Exposure Results &mdash;
+                T = @_exposureTimeHours h (@((int)(_exposureTimeHours * 3600)) s),&nbsp;
+                p = @_exponentP
+            </h5>
+        </div>
         <div class="card-body p-2">
-            <div class="table-responsive">
-                <table class="table table-sm table-bordered table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>x [m]</th>
-                            <th>y [m]</th>
-                            <th>EDEPE</th>
-                            <th>EDEPM_B</th>
-                            <th>EDEPM_H</th>
-                            <th>E avg [V/m]</th>
-                            <th>E eq [V/m]</th>
-                            <th>B avg [µT]</th>
-                            <th>B eq [µT]</th>
-                            <th>H avg [A/m]</th>
-                            <th>H eq [A/m]</th>
-                            <th>E max [V/m]</th>
-                            <th>E min [V/m]</th>
-                        </tr>
-                    </thead>
+
+            @if (_mode == ObsMode.SinglePoint && _exposureData.Count == 1)
+            {
+                var d = _exposureData[0];
+                <table class="table table-sm table-bordered" style="max-width:540px">
                     <tbody>
-                        @foreach (var r in _exposureResults)
-                        {
-                            <tr>
-                                <td>@r.Point.X.ToString("F1")</td>
-                                <td>@r.Point.Y.ToString("F1")</td>
-                                <td>@r.Edepe.ToString("G4")</td>
-                                <td>@r.EdepmB.ToString("G4")</td>
-                                <td>@r.EdepmH.ToString("G4")</td>
-                                <td>@r.EAverage.ToString("G4")</td>
-                                <td>@r.EEquivalent.ToString("G4")</td>
-                                <td>@((r.BAverage * 1e6).ToString("G4"))</td>
-                                <td>@((r.BEquivalent * 1e6).ToString("G4"))</td>
-                                <td>@r.HAverage.ToString("G4")</td>
-                                <td>@r.HEquivalent.ToString("G4")</td>
-                                <td>@r.EMax.ToString("G4")</td>
-                                <td>@r.EMin.ToString("G4")</td>
-                            </tr>
-                        }
+                        <tr><th colspan="2" class="table-light">
+                            Point (@d.Point.X.ToString("F2") m, @d.Point.Y.ToString("F2") m)
+                        </th></tr>
+                        <tr><td>E [V/m]</td><td>@d.EAverage.ToString("G4")</td></tr>
+                        <tr><td>H [A/m]</td><td>@d.HAverage.ToString("G4")</td></tr>
+                        <tr><th colspan="2" class="table-light">Electric exposure dose</th></tr>
+                        <tr>
+                            <td>EDEPE = E<sup>@_exponentP</sup> · T</td>
+                            <td>@d.Edepe.ToString("G4") <span class="text-muted small">(V/m)<sup>@_exponentP</sup>·s</span></td>
+                        </tr>
+                        <tr><td>E<sub>eq</sub> = (EDEPE / T)<sup>1/p</sup> [V/m]</td><td>@d.EEquivalent.ToString("G4")</td></tr>
+                        <tr><td>E max / E min [V/m]</td><td>@d.EMax.ToString("G4") / @d.EMin.ToString("G4")</td></tr>
+                        <tr><th colspan="2" class="table-light">Magnetic exposure dose (H)</th></tr>
+                        <tr>
+                            <td>EDEPM<sub>H</sub> = H<sup>@_exponentP</sup> · T</td>
+                            <td>@d.EdepmH.ToString("G4") <span class="text-muted small">(A/m)<sup>@_exponentP</sup>·s</span></td>
+                        </tr>
+                        <tr><td>H<sub>eq</sub> = (EDEPM<sub>H</sub> / T)<sup>1/p</sup> [A/m]</td><td>@d.HEquivalent.ToString("G4")</td></tr>
+                        <tr><td>H max / H min [A/m]</td><td>@d.HMax.ToString("G4") / @d.HMin.ToString("G4")</td></tr>
+                        <tr><td class="text-muted small" colspan="2">
+                            For constant fields: E<sub>eq</sub> = E<sub>avg</sub> = E<sub>max</sub> = E<sub>min</sub> (and same for H).
+                        </td></tr>
                     </tbody>
                 </table>
-            </div>
+            }
+            else
+            {
+                <!-- Profile table -->
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>x [m]</th>
+                                <th>E<sub>avg</sub> [V/m]</th>
+                                <th>H<sub>avg</sub> [A/m]</th>
+                                <th>EDEPE<br/><small class="text-muted">E<sup>p</sup>·T</small></th>
+                                <th>EDEPM<sub>H</sub><br/><small class="text-muted">H<sup>p</sup>·T</small></th>
+                                <th>E<sub>eq</sub> [V/m]</th>
+                                <th>H<sub>eq</sub> [A/m]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in _exposureData)
+                            {
+                                <tr>
+                                    <td>@d.Point.X.ToString("F1")</td>
+                                    <td>@d.EAverage.ToString("G4")</td>
+                                    <td>@d.HAverage.ToString("G4")</td>
+                                    <td>@d.Edepe.ToString("G4")</td>
+                                    <td>@d.EdepmH.ToString("G4")</td>
+                                    <td>@d.EEquivalent.ToString("G4")</td>
+                                    <td>@d.HEquivalent.ToString("G4")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Exposure dose charts -->
+                <div class="row mt-3 g-3">
+                    <div class="col-12 col-xl-6">
+                        <h6 class="text-center fw-bold" style="color:#6a1b9a">
+                            EDEPE over Distance (p=@_exponentP, T=@_exposureTimeHours h)
+                        </h6>
+                        <RadzenChart Style="height:280px">
+                            <RadzenLineSeries Data="@_edepePlotData"
+                                              CategoryProperty="X"
+                                              ValueProperty="Y"
+                                              Title="MEDEPE"
+                                              Smooth="true"
+                                              LineType="LineType.Solid"
+                                              Stroke="#6a1b9a"
+                                              StrokeWidth="2">
+                                <RadzenMarkers MarkerType="MarkerType.None" />
+                            </RadzenLineSeries>
+                            <RadzenCategoryAxis FormatString="{0:F0}">
+                                <RadzenAxisTitle Text="Distance from centre line [m]" />
+                            </RadzenCategoryAxis>
+                            <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                <RadzenAxisTitle Text="(V/m)^p·s" />
+                                <RadzenGridLines Visible="true" />
+                            </RadzenValueAxis>
+                        </RadzenChart>
+                    </div>
+                    <div class="col-12 col-xl-6">
+                        <h6 class="text-center fw-bold" style="color:#bf360c">
+                            EDEPM<sub>H</sub> over Distance (p=@_exponentP, T=@_exposureTimeHours h)
+                        </h6>
+                        <RadzenChart Style="height:280px">
+                            <RadzenLineSeries Data="@_medepmHPlotData"
+                                              CategoryProperty="X"
+                                              ValueProperty="Y"
+                                              Title="MEDEPM_H"
+                                              Smooth="true"
+                                              LineType="LineType.Solid"
+                                              Stroke="#bf360c"
+                                              StrokeWidth="2">
+                                <RadzenMarkers MarkerType="MarkerType.None" />
+                            </RadzenLineSeries>
+                            <RadzenCategoryAxis FormatString="{0:F0}">
+                                <RadzenAxisTitle Text="Distance from centre line [m]" />
+                            </RadzenCategoryAxis>
+                            <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                <RadzenAxisTitle Text="(A/m)^p·s" />
+                                <RadzenGridLines Visible="true" />
+                            </RadzenValueAxis>
+                        </RadzenChart>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 }
@@ -347,37 +424,35 @@
 
     // ── View models ───────────────────────────────────────────────────────────
 
-    /// <summary>Flat UI representation of one conductor.</summary>
+    /// <summary>Flat UI representation of one conductor / bundle.</summary>
     private class ConductorModel
     {
-        public string Id           { get; set; } = "?";
-        public double X            { get; set; }
-        public double Y            { get; set; } = 12;
-        public double Radius       { get; set; } = 0.015;
-        public double VoltageRms   { get; set; }
-        public double VoltageAngle { get; set; }
-        public double CurrentRms   { get; set; }
-        public double CurrentAngle { get; set; }
-        public bool   IncludeE     { get; set; } = true;
-        public bool   IncludeB     { get; set; } = true;
+        public string     Id           { get; set; } = "?";
+        public double     X            { get; set; }
+        public double     Y            { get; set; } = 12;
+
+        // Bundle geometry
+        public BundleType Bundle       { get; set; } = BundleType.Single;
+        public double     SubRadius    { get; set; } = 0.015;  // r_s – sub-conductor radius [m]
+        public double     Spacing      { get; set; } = 0.4;    // s   – spacing between adjacent sub-conductors [m]
+
+        // Electrical state
+        public double     VoltageRms   { get; set; }
+        public double     VoltageAngle { get; set; }
+        public double     CurrentRms   { get; set; }
+        public double     CurrentAngle { get; set; }
+
+        // Inclusion flags
+        public bool       IncludeE     { get; set; } = true;
+        public bool       IncludeB     { get; set; } = true;
+
+        /// <summary>Equivalent bundle radius r_eq computed from bundle parameters (read-only display).</summary>
+        public double EquivalentRadius =>
+            BundleCalculator.CalculateEquivalentRadius(Bundle, SubRadius,
+                Bundle == BundleType.Single ? 0 : Spacing);
     }
 
-    /// <summary>Per-conductor data for one exposure operating state.</summary>
-    private class ConductorStateModel
-    {
-        public string Id           { get; set; } = "";
-        public double VoltageRms   { get; set; }
-        public double VoltageAngle { get; set; }
-        public double CurrentRms   { get; set; }
-        public double CurrentAngle { get; set; }
-    }
-
-    /// <summary>One operating state for the exposure calculation.</summary>
-    private class StateModel
-    {
-        public double DurationSeconds          { get; set; } = 3600;
-        public List<ConductorStateModel> ConductorData { get; set; } = new();
-    }
+    // ExposurePointData record removed — we use ExposureResult from the backend directly.
 
     private enum ObsMode { SinglePoint, Profile }
 
@@ -385,19 +460,20 @@
 
     private List<ConductorModel> _conductors = new();
 
-    private ObsMode _mode     = ObsMode.Profile;
+    private ObsMode _mode      = ObsMode.Profile;
     private double  _ptX;
-    private double  _ptY      = 1;
-    private double  _profY    = 1;
-    private double  _profXMin = -50;
-    private double  _profXMax =  50;
+    private double  _ptY       = 1;
+    private double  _profY     = 1;
+    private double  _profXMin  = -50;
+    private double  _profXMax  =  50;
     private int     _profSteps = 101;
 
-    private List<StateModel> _states   = new();
-    private double           _exponentP = 1.0;
+    // Exposure settings
+    private double _exposureTimeHours = 8.0;   // default: 8-hour working day
+    private double _exponentP         = 2.0;   // p=2 → energetic interpretation
 
     private IReadOnlyList<FieldResult>?    _fieldResults;
-    private IReadOnlyList<ExposureResult>? _exposureResults;
+    private IReadOnlyList<ExposureResult>? _exposureData;   // results from backend CalculateExposure
     private string?                        _errorMessage;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -408,41 +484,24 @@
 
     private void LoadDefaultConductors()
     {
-        double vRms = 110_000.0 / Math.Sqrt(3);
+        double vRms = 110_000.0 / Math.Sqrt(3); // 110 kV line-to-line → phase voltage
         _conductors =
         [
-            new() { Id = "A", X = -4, Y = 12, Radius = 0.015, VoltageRms = vRms, VoltageAngle =    0, CurrentRms = 400, CurrentAngle =    0 },
-            new() { Id = "B", X =  0, Y = 12, Radius = 0.015, VoltageRms = vRms, VoltageAngle = -120, CurrentRms = 400, CurrentAngle = -120 },
-            new() { Id = "C", X =  4, Y = 12, Radius = 0.015, VoltageRms = vRms, VoltageAngle =  120, CurrentRms = 400, CurrentAngle =  120 },
+            new() { Id = "A", X = -4, Y = 12, Bundle = BundleType.Single, SubRadius = 0.015, VoltageRms = vRms, VoltageAngle =    0, CurrentRms = 400, CurrentAngle =    0 },
+            new() { Id = "B", X =  0, Y = 12, Bundle = BundleType.Single, SubRadius = 0.015, VoltageRms = vRms, VoltageAngle = -120, CurrentRms = 400, CurrentAngle = -120 },
+            new() { Id = "C", X =  4, Y = 12, Bundle = BundleType.Single, SubRadius = 0.015, VoltageRms = vRms, VoltageAngle =  120, CurrentRms = 400, CurrentAngle =  120 },
         ];
-        _states.Clear();
         _fieldResults    = null;
-        _exposureResults = null;
+        _exposureData    = null;
         _ePlotData       = null;
         _hPlotData       = null;
+        _edepePlotData   = null;
+        _medepmHPlotData = null;
         _errorMessage    = null;
     }
 
     private void AddConductor()
         => _conductors.Add(new ConductorModel { Id = $"C{_conductors.Count + 1}" });
-
-    // ── Exposure state helpers ────────────────────────────────────────────────
-
-    private void AddState()
-    {
-        var state = new StateModel
-        {
-            ConductorData = _conductors.Select(c => new ConductorStateModel
-            {
-                Id           = c.Id,
-                VoltageRms   = c.VoltageRms,
-                VoltageAngle = c.VoltageAngle,
-                CurrentRms   = c.CurrentRms,
-                CurrentAngle = c.CurrentAngle
-            }).ToList()
-        };
-        _states.Add(state);
-    }
 
     // ── Calculation ───────────────────────────────────────────────────────────
 
@@ -450,9 +509,11 @@
     {
         _errorMessage    = null;
         _fieldResults    = null;
-        _exposureResults = null;
+        _exposureData    = null;
         _ePlotData       = null;
         _hPlotData       = null;
+        _edepePlotData   = null;
+        _medepmHPlotData = null;
 
         try
         {
@@ -460,7 +521,6 @@
             var points     = BuildPoints();
             _fieldResults  = FieldCalculator.CalculateField(conductors, points);
 
-            // Build flat plot-data lists for the Radzen charts
             if (_mode == ObsMode.Profile && _fieldResults is not null)
             {
                 _ePlotData = _fieldResults.Select(r => new PlotPoint(r.Point.X, r.E)).ToList();
@@ -473,17 +533,50 @@
         }
     }
 
+    /// <summary>
+    /// Delegates to the backend CalculateExposure engine.
+    /// For constant electrical conditions a single OperatingState with duration T
+    /// is created from the current conductor data. The backend then computes:
+    ///   EDEPE   = E^p · T
+    ///   EdepmH  = H^p · T
+    ///   EAverage, HAverage, EMax, EMin, HMax, HMin
+    ///   EEquivalent = (EDEPE / T)^(1/p)  = E  (constant field)
+    ///   HEquivalent = (EdepmH / T)^(1/p) = H  (constant field)
+    /// </summary>
     private void CalculateExposure()
     {
         _errorMessage    = null;
-        _exposureResults = null;
+        _exposureData    = null;
+        _edepePlotData   = null;
+        _medepmHPlotData = null;
+
+        if (_fieldResults is null)
+        {
+            _errorMessage = "Calculate the field first before computing exposure.";
+            return;
+        }
 
         try
         {
             var conductors = BuildConductors();
             var points     = BuildPoints();
-            var states     = BuildStates();
-            _exposureResults = FieldCalculator.CalculateExposure(conductors, points, states, _exponentP);
+
+            // Single operating state = current conductor data for the full exposure duration T
+            double t = _exposureTimeHours * 3600.0;
+            var state = new OperatingState
+            {
+                DurationSeconds = t,
+                Voltages = conductors.Select(c => c.Voltage).ToList(),
+                Currents = conductors.Select(c => c.Current).ToList()
+            };
+
+            _exposureData = FieldCalculator.CalculateExposure(conductors, points, [state], _exponentP);
+
+            if (_mode == ObsMode.Profile)
+            {
+                _edepePlotData   = _exposureData.Select(r => new PlotPoint(r.Point.X, r.Edepe)).ToList();
+                _medepmHPlotData = _exposureData.Select(r => new PlotPoint(r.Point.X, r.EdepmH)).ToList();
+            }
         }
         catch (Exception ex)
         {
@@ -496,12 +589,15 @@
     private List<Conductor> BuildConductors()
         => _conductors.Select(c => new Conductor
         {
-            Id                    = c.Id,
-            X                     = c.X,
-            Y                     = c.Y,
-            Radius                = c.Radius,
-            Voltage               = ElectromagneticFieldCalculator.Phasor(c.VoltageRms, c.VoltageAngle),
-            Current               = ElectromagneticFieldCalculator.Phasor(c.CurrentRms, c.CurrentAngle),
+            Id                     = c.Id,
+            X                      = c.X,
+            Y                      = c.Y,
+            // Compute equivalent radius from bundle geometry; Single uses SubRadius directly.
+            Radius                 = BundleCalculator.CalculateEquivalentRadius(
+                                         c.Bundle, c.SubRadius,
+                                         c.Bundle == BundleType.Single ? 0 : c.Spacing),
+            Voltage                = ElectromagneticFieldCalculator.Phasor(c.VoltageRms, c.VoltageAngle),
+            Current                = ElectromagneticFieldCalculator.Phasor(c.CurrentRms, c.CurrentAngle),
             IncludeInElectricField = c.IncludeE,
             IncludeInMagneticField = c.IncludeB
         }).ToList();
@@ -518,16 +614,6 @@
             .ToList();
     }
 
-    private List<OperatingState> BuildStates()
-        => _states.Select(s => new OperatingState
-        {
-            DurationSeconds = s.DurationSeconds,
-            Voltages = s.ConductorData.Select(cd =>
-                ElectromagneticFieldCalculator.Phasor(cd.VoltageRms, cd.VoltageAngle)).ToList(),
-            Currents = s.ConductorData.Select(cd =>
-                ElectromagneticFieldCalculator.Phasor(cd.CurrentRms, cd.CurrentAngle)).ToList()
-        }).ToList();
-
     // ── Formatting helpers ────────────────────────────────────────────────────
 
     private static string FormatComplex(Complex c)
@@ -540,5 +626,6 @@
 
     private List<PlotPoint>? _ePlotData;
     private List<PlotPoint>? _hPlotData;
+    private List<PlotPoint>? _edepePlotData;
+    private List<PlotPoint>? _medepmHPlotData;
 }
-

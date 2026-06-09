@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
 /// All field components and magnitudes calculated at a single observation point

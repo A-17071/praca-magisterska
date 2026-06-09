@@ -1,4 +1,4 @@
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
 /// Exposure dose results at a single observation point, accumulated over all operating states.

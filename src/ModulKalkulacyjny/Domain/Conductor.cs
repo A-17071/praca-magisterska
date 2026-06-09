@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace ModulKalkulacyjny;
+namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
 /// Represents a single conductor in the overhead power line cross-section model.
