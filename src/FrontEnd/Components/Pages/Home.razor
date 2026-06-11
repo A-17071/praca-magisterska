@@ -1,19 +1,49 @@
 ﻿@page "/"
+@layout HomeLayout
 
 <PageTitle>EM Field Calculator</PageTitle>
 
-<h1>Electromagnetic Field Calculator</h1>
+<div class="card border-0 shadow-sm text-center" style="max-width:520px; width:100%;">
+    <div class="card-body p-4 p-md-5">
 
-<p class="lead">
-    This application calculates the electric and magnetic field around an overhead
-    power line using a quasi-static 2-D model.
-</p>
+        <span class="badge bg-primary mb-3">Power Line EMF Analysis</span>
 
-<ul>
-    <li>Enter conductor geometry and electrical data on the <a href="/calculator">Calculator</a> page.</li>
-    <li>Choose a single observation point or a horizontal profile.</li>
-    <li>Run the field calculation or the exposure dose calculation.</li>
-</ul>
+        <h1 class="fw-bold mb-3">Electromagnetic Field Calculator</h1>
 
-<a class="btn btn-primary" href="/calculator">Open Calculator</a>
+        <p class="text-muted mb-4">
+            Quasi-static 2-D model for overhead power lines.
+            Compute electric field <strong>E</strong>, magnetic flux density
+            <strong>B</strong> and field strength <strong>H</strong> at any
+            observation point or along a horizontal profile.
+        </p>
 
+        <!-- Feature chips -->
+        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">⚡ Electric field E</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">🧲 Magnetic field B &amp; H</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">📊 Horizontal profiles</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">⏱ Exposure doses</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">📥 CSV export</span>
+        </div>
+
+        <!-- CTA -->
+        <div class="mb-4">
+            <a href="/calculator" class="btn btn-primary btn-lg px-5">
+                Open Calculator &rarr;
+            </a>
+        </div>
+
+        <!-- Steps -->
+        <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 pt-3 border-top text-muted small">
+            <span class="step-num">1</span>
+            <span>Define conductors</span>
+            <span>&#8594;</span>
+            <span class="step-num">2</span>
+            <span>Set observation</span>
+            <span>&#8594;</span>
+            <span class="step-num">3</span>
+            <span>Calculate &amp; export</span>
+        </div>
+
+    </div>
+</div>

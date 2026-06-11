@@ -4,426 +4,608 @@
 @using ModulKalkulacyjny.Solvers
 @rendermode InteractiveServer
 @inject ElectromagneticFieldCalculator FieldCalculator
+@inject IJSRuntime JS
 
 <PageTitle>EM Field Calculator</PageTitle>
 
-<h2 class="mb-4">Electromagnetic Field Calculator</h2>
+<div class="page-header mb-4">
+    <div>
+        <h1 class="page-title">Electromagnetic Field Calculator</h1>
+        <p class="page-subtitle">Power line EMF analysis — E, B &amp; H field profiles</p>
+    </div>
+    <div class="status-badge @(_errorMessage is null ? "" : "status-error")">
+        <span class="status-dot"></span>
+        @(_errorMessage is null ? "Ready" : "Error")
+    </div>
+</div>
 
 @if (_errorMessage is not null)
 {
-    <div class="alert alert-danger alert-dismissible">
+    <div class="alert alert-danger alert-dismissible mb-3">
         <strong>Error:</strong> @_errorMessage
         <button class="btn-close" @onclick="() => _errorMessage = null"></button>
     </div>
 }
 
-<!-- ═══════════════════════ 1. CONDUCTORS ═══════════════════════ -->
-<div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">1. Conductors</h5>
-        <button class="btn btn-sm btn-outline-secondary" @onclick="LoadDefaultConductors">
-            Load 3-phase example
-        </button>
-    </div>
-    <div class="card-body p-2">
-        <div class="table-responsive">
-            <table class="table table-sm table-bordered align-middle mb-2">
-                <thead class="table-light">
-                    <tr>
-                        <th>Id</th>
-                        <th>x [m]</th>
-                        <th>y [m]</th>
-                        <th>Bundle</th>
-                        <th>r<sub>s</sub> [m]</th>
-                        <th>s [m]</th>
-                        <th title="Computed equivalent radius, read-only">r<sub>eq</sub> [m]</th>
-                        <th>U [V]</th>
-                        <th>φU [°]</th>
-                        <th>I [A]</th>
-                        <th>φI [°]</th>
-                        <th title="Include in electric field">E?</th>
-                        <th title="Include in magnetic field">B?</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var c in _conductors)
+<div class="row g-3 align-items-start">
+
+    <!-- ════════════════ LEFT — INPUTS + RESULTS ════════════════════ -->
+    <div class="col-12 col-xl-8 calc-main">
+
+        <div class="section-card mb-3">
+            <div class="section-header">
+                <span class="section-num">1</span>
+                <h5 class="mb-0">Conductors</h5>
+                <button class="btn btn-sm btn-outline-secondary ms-auto" @onclick="LoadDefaultConductors">
+                    ↺ Load 3-phase example
+                </button>
+            </div>
+            <div class="section-body p-2">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle mb-2">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Id</th>
+                                <th>x [m]</th>
+                                <th>y [m]</th>
+                                <th>Bundle</th>
+                                <th>r<sub>s</sub> [m]</th>
+                                <th>s [m]</th>
+                                <th title="Computed equivalent radius (read-only)">r<sub>eq</sub> [m]</th>
+                                <th>U [V]</th>
+                                <th>φU [°]</th>
+                                <th>I [A]</th>
+                                <th>φI [°]</th>
+                                <th title="Include in electric field">E?</th>
+                                <th title="Include in magnetic field">B?</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < _conductors.Count; i++)
+                            {
+                                var idx = i;
+                                var c   = _conductors[idx];
+                                var col = GetConductorColor(idx);
+                                <tr>
+                                    <td>
+                                        <span class="cond-badge" style="background:@col">@c.Id</span>
+                                    </td>
+                                    <td><input class="form-control form-control-sm" style="width:70px" @bind="c.X" /></td>
+                                    <td><input class="form-control form-control-sm" style="width:70px" @bind="c.Y" /></td>
+                                    <td>
+                                        <select class="form-select form-select-sm" style="width:120px" @bind="c.Bundle">
+                                            <option value="@BundleType.Single">Single</option>
+                                            <option value="@BundleType.Twin">Twin</option>
+                                            <option value="@BundleType.TripleTriangle">Triple (△)</option>
+                                            <option value="@BundleType.QuadSquare">Quad (□)</option>
+                                        </select>
+                                    </td>
+                                    <td><input class="form-control form-control-sm" style="width:70px" @bind="c.SubRadius" /></td>
+                                    <td>
+                                        <input class="form-control form-control-sm" style="width:70px"
+                                               @bind="c.Spacing"
+                                               disabled="@(c.Bundle == BundleType.Single)" />
+                                    </td>
+                                    <td>
+                                        <input class="form-control form-control-sm bg-light text-muted" style="width:80px"
+                                               value="@c.EquivalentRadius.ToString("G4")"
+                                               readonly="readonly" />
+                                    </td>
+                                    <td><input class="form-control form-control-sm" style="width:95px" @bind="c.VoltageRms" /></td>
+                                    <td><input class="form-control form-control-sm" style="width:70px" @bind="c.VoltageAngle" /></td>
+                                    <td><input class="form-control form-control-sm" style="width:95px" @bind="c.CurrentRms" /></td>
+                                    <td><input class="form-control form-control-sm" style="width:70px" @bind="c.CurrentAngle" /></td>
+                                    <td class="text-center"><input type="checkbox" class="form-check-input" @bind="c.IncludeE" /></td>
+                                    <td class="text-center"><input type="checkbox" class="form-check-input" @bind="c.IncludeB" /></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => _conductors.Remove(c)">✕</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" @onclick="AddConductor">+ Add conductor</button>
+            </div>
+        </div>
+
+        <div class="section-card mb-3">
+            <div class="section-header">
+                <span class="section-num">2</span>
+                <h5 class="mb-0">Observation</h5>
+            </div>
+            <div class="section-body">
+                <div class="mb-3">
+                    <div class="mode-btn-group">
+                        <button class="mode-btn @(_mode == ObsMode.SinglePoint ? "active" : "")"
+                                @onclick="() => _mode = ObsMode.SinglePoint">Single Point</button>
+                        <button class="mode-btn @(_mode == ObsMode.Profile ? "active" : "")"
+                                @onclick="() => _mode = ObsMode.Profile">Horizontal Profile</button>
+                    </div>
+                </div>
+
+                @if (_mode == ObsMode.SinglePoint)
+                {
+                    <div class="row g-3">
+                        <div class="col-auto">
+                            <label class="form-label small text-muted text-uppercase fw-semibold">X [m]</label>
+                            <input class="form-control form-control-sm" style="width:100px" @bind="_ptX" />
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label small text-muted text-uppercase fw-semibold">Y [m]</label>
+                            <input class="form-control form-control-sm" style="width:100px" @bind="_ptY" />
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        <div class="col-auto">
+                            <label class="form-label small text-muted text-uppercase fw-semibold">Height Y</label>
+                            <input class="form-control form-control-sm" style="width:90px" @bind="_profY" />
+                            <div class="form-text">Observation height</div>
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label small text-muted text-uppercase fw-semibold">X Min</label>
+                            <input class="form-control form-control-sm" style="width:90px" @bind="_profXMin" />
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label small text-muted text-uppercase fw-semibold">X Max</label>
+                            <input class="form-control form-control-sm" style="width:90px" @bind="_profXMax" />
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label small text-muted text-uppercase fw-semibold">Steps</label>
+                            <input class="form-control form-control-sm" style="width:80px" @bind="_profSteps" />
+                            <div class="form-text">Number of points</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="section-card mb-3">
+            <div class="section-header">
+                <span class="section-num">3</span>
+                <h5 class="mb-0">Exposure Settings</h5>
+            </div>
+            <div class="section-body">
+                <div class="row g-3 align-items-start mb-3">
+                    <div class="col-auto">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Exposure Time T</label>
+                        <div class="input-group input-group-sm" style="width:160px">
+                            <input class="form-control" @bind="_exposureTimeHours" />
+                            <span class="input-group-text">h</span>
+                        </div>
+                        <div class="form-text">T = @((int)(_exposureTimeHours * 3600)) s</div>
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Exponent P</label>
+                        <input class="form-control form-control-sm" style="width:100px" @bind="_exponentP" />
+                        <div class="form-text">p=2 → time-averaged field</div>
+                    </div>
+                </div>
+                <div class="info-box">
+                    ⚠ <strong>Constant-field simplification:</strong>
+                    MEDEPE = E·T &nbsp;|&nbsp; MEDEPH = H·T &nbsp;|&nbsp;
+                    E<sub>eq</sub> = (MEDEPE/T)<sup>1/p</sup> &nbsp;|&nbsp;
+                    H<sub>eq</sub> = (MEDEPH/T)<sup>1/p</sup>.
+                    Recommended: p=2 (energetic interpretation). p=1 gives the time-averaged field.
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid d-sm-flex gap-2 mb-4">
+            <button class="btn btn-primary btn-action" @onclick="CalculateField">
+                ⚡ Calculate Field
+            </button>
+            <button class="btn btn-outline-secondary btn-action" @onclick="CalculateExposure"
+                    disabled="@(_fieldResults is null)">
+                Calculate Exposure
+            </button>
+        </div>
+
+        @if (_fieldResults is not null)
+        {
+            <div class="section-card mb-3">
+                <div class="section-header">
+                    <h5 class="mb-0">
+                        Field Results
+                        @if (_mode == ObsMode.Profile)
+                        {
+                            <span class="text-muted fw-normal fs-6"> — @_fieldResults.Count points</span>
+                        }
+                    </h5>
+                    <div class="ms-auto d-flex gap-2 align-items-center">
+                        @if (_mode == ObsMode.Profile)
+                        {
+                            <div class="view-toggle">
+                                <button class="toggle-btn @(_fieldResultView == ResultView.Charts ? "active" : "")"
+                                        @onclick="() => _fieldResultView = ResultView.Charts">
+                                    📊 Charts
+                                </button>
+                                <button class="toggle-btn @(_fieldResultView == ResultView.Table ? "active" : "")"
+                                        @onclick="() => _fieldResultView = ResultView.Table">
+                                    ⊞ Table
+                                </button>
+                            </div>
+                        }
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="ExportFieldResultsCsv" title="Export results to CSV">
+                            ⬇ Export CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="section-body">
+                    @if (_mode == ObsMode.SinglePoint)
                     {
-                        <tr>
-                            <td><input class="form-control form-control-sm" style="width:50px" @bind="c.Id" /></td>
-                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.X" /></td>
-                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.Y" /></td>
-                            <td>
-                                <select class="form-select form-select-sm" style="width:120px" @bind="c.Bundle">
-                                    <option value="@BundleType.Single">Single</option>
-                                    <option value="@BundleType.Twin">Twin</option>
-                                    <option value="@BundleType.TripleTriangle">Triple (△)</option>
-                                    <option value="@BundleType.QuadSquare">Quad (□)</option>
-                                </select>
-                            </td>
-                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.SubRadius" /></td>
-                            <td>
-                                <input class="form-control form-control-sm" style="width:75px"
-                                       @bind="c.Spacing"
-                                       disabled="@(c.Bundle == BundleType.Single)" />
-                            </td>
-                            <td>
-                                <input style="width:80px" class="form-control form-control-sm text-muted bg-light"
-                                       value="@c.EquivalentRadius.ToString("G4")"
-                                       readonly="readonly" />
-                            </td>
-                            <td><input class="form-control form-control-sm" style="width:95px" @bind="c.VoltageRms" /></td>
-                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.VoltageAngle" /></td>
-                            <td><input class="form-control form-control-sm" style="width:95px" @bind="c.CurrentRms" /></td>
-                            <td><input class="form-control form-control-sm" style="width:75px" @bind="c.CurrentAngle" /></td>
-                            <td class="text-center"><input type="checkbox" @bind="c.IncludeE" /></td>
-                            <td class="text-center"><input type="checkbox" @bind="c.IncludeB" /></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => _conductors.Remove(c)">✕</button>
-                            </td>
-                        </tr>
+                        var r = _fieldResults[0];
+                        <table class="table table-sm table-bordered" style="max-width:500px">
+                            <tbody>
+                                <tr><th colspan="2" class="table-light">Electric field at (@r.Point.X.ToString("F2") m, @r.Point.Y.ToString("F2") m)</th></tr>
+                                <tr><td>Ex (complex) [V/m]</td><td>@FormatComplex(r.Ex)</td></tr>
+                                <tr><td>Ey (complex) [V/m]</td><td>@FormatComplex(r.Ey)</td></tr>
+                                <tr><td><strong>E (RMS) [V/m]</strong></td><td><strong>@r.E.ToString("G4")</strong></td></tr>
+                                <tr><th colspan="2" class="table-light">Magnetic flux density</th></tr>
+                                <tr><td>Bx (complex) [µT]</td><td>@FormatComplex(r.Bx * 1e6)</td></tr>
+                                <tr><td>By (complex) [µT]</td><td>@FormatComplex(r.By * 1e6)</td></tr>
+                                <tr><td><strong>B (RMS) [µT]</strong></td><td><strong>@((r.B * 1e6).ToString("G4"))</strong></td></tr>
+                                <tr><th colspan="2" class="table-light">Magnetic field strength</th></tr>
+                                <tr><td>Hx (complex) [A/m]</td><td>@FormatComplex(r.Hx)</td></tr>
+                                <tr><td>Hy (complex) [A/m]</td><td>@FormatComplex(r.Hy)</td></tr>
+                                <tr><td><strong>H (RMS) [A/m]</strong></td><td><strong>@r.H.ToString("G4")</strong></td></tr>
+                            </tbody>
+                        </table>
                     }
-                </tbody>
-            </table>
-        </div>
-        <button class="btn btn-sm btn-outline-primary" @onclick="AddConductor">+ Add conductor</button>
-    </div>
-</div>
+                    else
+                    {
+                        <!-- Peak stat cards -->
+                        <div class="row g-2 mb-4">
+                            <div class="col-12 col-sm-4">
+                                <div class="stat-card" style="border-top-color:#1565C0">
+                                    <div class="stat-label">Peak Electric Field</div>
+                                    <div class="stat-value" style="color:#1565C0">
+                                        @PeakE.ToString("G4") <span class="stat-unit">V/m</span>
+                                    </div>
+                                    <div class="stat-sub">RMS</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-4">
+                                <div class="stat-card" style="border-top-color:#00838F">
+                                    <div class="stat-label">Peak Magnetic Flux</div>
+                                    <div class="stat-value" style="color:#00838F">
+                                        @PeakB.ToString("G4") <span class="stat-unit">µT</span>
+                                    </div>
+                                    <div class="stat-sub">RMS</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-4">
+                                <div class="stat-card" style="border-top-color:#E65100">
+                                    <div class="stat-label">Peak Mag. Field Strength</div>
+                                    <div class="stat-value" style="color:#E65100">
+                                        @PeakH.ToString("G4") <span class="stat-unit">A/m</span>
+                                    </div>
+                                    <div class="stat-sub">RMS</div>
+                                </div>
+                            </div>
+                        </div>
 
-<!-- ═══════════════════════ 2. OBSERVATION ══════════════════════ -->
-<div class="card mb-3">
-    <div class="card-header"><h5 class="mb-0">2. Observation</h5></div>
-    <div class="card-body">
-        <div class="mb-3">
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" id="modePoint" name="mode"
-                       checked="@(_mode == ObsMode.SinglePoint)"
-                       @onchange="() => _mode = ObsMode.SinglePoint" />
-                <label class="form-check-label" for="modePoint">Single point</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" id="modeProfile" name="mode"
-                       checked="@(_mode == ObsMode.Profile)"
-                       @onchange="() => _mode = ObsMode.Profile" />
-                <label class="form-check-label" for="modeProfile">Horizontal profile</label>
-            </div>
-        </div>
-
-        @if (_mode == ObsMode.SinglePoint)
-        {
-            <div class="row g-2">
-                <div class="col-auto">
-                    <label class="col-form-label">x [m]</label>
-                    <input class="form-control form-control-sm" style="width:100px" @bind="_ptX" />
-                </div>
-                <div class="col-auto">
-                    <label class="col-form-label">y [m]</label>
-                    <input class="form-control form-control-sm" style="width:100px" @bind="_ptY" />
+                        @if (_fieldResultView == ResultView.Charts)
+                        {
+                            <div class="row g-3">
+                                <div class="col-12 col-xl-6">
+                                    <p class="chart-title" style="color:#1565C0">● Electric Field E over Distance</p>
+                                    <RadzenChart Style="height:290px">
+                                        <RadzenLineSeries Data="@_ePlotData" CategoryProperty="X" ValueProperty="Y"
+                                                          Title="E [V/m]" Smooth="true" Stroke="#1565C0" StrokeWidth="2">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
+                                        <RadzenCategoryAxis FormatString="{0:F0}">
+                                            <RadzenAxisTitle Text="Distance from centre line [m]" />
+                                        </RadzenCategoryAxis>
+                                        <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                            <RadzenAxisTitle Text="E [V/m]" />
+                                            <RadzenGridLines Visible="true" />
+                                        </RadzenValueAxis>
+                                    </RadzenChart>
+                                </div>
+                                <div class="col-12 col-xl-6">
+                                    <p class="chart-title" style="color:#00838F">● Magnetic Field Strength H over Distance</p>
+                                    <RadzenChart Style="height:290px">
+                                        <RadzenLineSeries Data="@_hPlotData" CategoryProperty="X" ValueProperty="Y"
+                                                          Title="H [A/m]" Smooth="true" Stroke="#00838F" StrokeWidth="2">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
+                                        <RadzenCategoryAxis FormatString="{0:F0}">
+                                            <RadzenAxisTitle Text="Distance from centre line [m]" />
+                                        </RadzenCategoryAxis>
+                                        <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                            <RadzenAxisTitle Text="H [A/m]" />
+                                            <RadzenGridLines Visible="true" />
+                                        </RadzenValueAxis>
+                                    </RadzenChart>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>x [m]</th>
+                                            <th>E [V/m]</th>
+                                            <th>B [µT]</th>
+                                            <th>H [A/m]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var r in _fieldResults)
+                                        {
+                                            <tr>
+                                                <td>@r.Point.X.ToString("F1")</td>
+                                                <td>@r.E.ToString("G4")</td>
+                                                <td>@((r.B * 1e6).ToString("G4"))</td>
+                                                <td>@r.H.ToString("G4")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
                 </div>
             </div>
         }
-        else
+
+        @if (_exposureData is not null)
         {
-            <div class="row g-2">
-                <div class="col-auto">
-                    <label class="col-form-label">y [m]</label>
-                    <input class="form-control form-control-sm" style="width:90px" @bind="_profY" />
+            <div class="section-card mb-3">
+                <div class="section-header">
+                    <h5 class="mb-0">
+                        Exposure Results
+                        <span class="text-muted fw-normal fs-6"> — T=@_exposureTimeHours h, p=@_exponentP</span>
+                    </h5>
+                    <div class="ms-auto d-flex gap-2 align-items-center">
+                        @if (_mode == ObsMode.Profile)
+                        {
+                            <div class="view-toggle">
+                                <button class="toggle-btn @(_exposureResultView == ResultView.Charts ? "active" : "")"
+                                        @onclick="() => _exposureResultView = ResultView.Charts">
+                                    📊 Charts
+                                </button>
+                                <button class="toggle-btn @(_exposureResultView == ResultView.Table ? "active" : "")"
+                                        @onclick="() => _exposureResultView = ResultView.Table">
+                                    ⊞ Table
+                                </button>
+                            </div>
+                        }
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="ExportExposureResultsCsv" title="Export results to CSV">
+                            ⬇ Export CSV
+                        </button>
+                    </div>
                 </div>
-                <div class="col-auto">
-                    <label class="col-form-label">x min [m]</label>
-                    <input class="form-control form-control-sm" style="width:90px" @bind="_profXMin" />
-                </div>
-                <div class="col-auto">
-                    <label class="col-form-label">x max [m]</label>
-                    <input class="form-control form-control-sm" style="width:90px" @bind="_profXMax" />
-                </div>
-                <div class="col-auto">
-                    <label class="col-form-label">Steps</label>
-                    <input class="form-control form-control-sm" style="width:80px" @bind="_profSteps" />
+                <div class="section-body">
+                    @if (_mode == ObsMode.SinglePoint && _exposureData.Count == 1)
+                    {
+                        var d = _exposureData[0];
+                        <table class="table table-sm table-bordered" style="max-width:540px">
+                            <tbody>
+                                <tr><th colspan="2" class="table-light">
+                                    Point (@d.Point.X.ToString("F2") m, @d.Point.Y.ToString("F2") m)
+                                </th></tr>
+                                <tr><td>E [V/m]</td><td>@d.EAverage.ToString("G4")</td></tr>
+                                <tr><td>H [A/m]</td><td>@d.HAverage.ToString("G4")</td></tr>
+                                <tr><th colspan="2" class="table-light">Electric exposure dose</th></tr>
+                                <tr>
+                                    <td>EDEPE = E<sup>@_exponentP</sup> · T</td>
+                                    <td>@d.Edepe.ToString("G4") <span class="text-muted small">(V/m)<sup>@_exponentP</sup>·s</span></td>
+                                </tr>
+                                <tr><td>E<sub>eq</sub> = (EDEPE / T)<sup>1/p</sup> [V/m]</td><td>@d.EEquivalent.ToString("G4")</td></tr>
+                                <tr><td>E max / E min [V/m]</td><td>@d.EMax.ToString("G4") / @d.EMin.ToString("G4")</td></tr>
+                                <tr><th colspan="2" class="table-light">Magnetic exposure dose (H)</th></tr>
+                                <tr>
+                                    <td>EDEPM<sub>H</sub> = H<sup>@_exponentP</sup> · T</td>
+                                    <td>@d.EdepmH.ToString("G4") <span class="text-muted small">(A/m)<sup>@_exponentP</sup>·s</span></td>
+                                </tr>
+                                <tr><td>H<sub>eq</sub> = (EDEPM<sub>H</sub> / T)<sup>1/p</sup> [A/m]</td><td>@d.HEquivalent.ToString("G4")</td></tr>
+                                <tr><td>H max / H min [A/m]</td><td>@d.HMax.ToString("G4") / @d.HMin.ToString("G4")</td></tr>
+                                <tr><td class="text-muted small" colspan="2">
+                                    For constant fields: E<sub>eq</sub> = E<sub>avg</sub> = E<sub>max</sub> = E<sub>min</sub> (and same for H).
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        @if (_exposureResultView == ResultView.Charts)
+                        {
+                            <div class="row g-3">
+                                <div class="col-12 col-xl-6">
+                                    <p class="chart-title" style="color:#6a1b9a">
+                                        ● EDEPE over Distance (p=@_exponentP, T=@_exposureTimeHours h)
+                                    </p>
+                                    <RadzenChart Style="height:280px">
+                                        <RadzenLineSeries Data="@_edepePlotData" CategoryProperty="X" ValueProperty="Y"
+                                                          Title="EDEPE" Smooth="true" Stroke="#6a1b9a" StrokeWidth="2">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
+                                        <RadzenCategoryAxis FormatString="{0:F0}">
+                                            <RadzenAxisTitle Text="Distance from centre line [m]" />
+                                        </RadzenCategoryAxis>
+                                        <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                            <RadzenAxisTitle Text="(V/m)^p·s" />
+                                            <RadzenGridLines Visible="true" />
+                                        </RadzenValueAxis>
+                                    </RadzenChart>
+                                </div>
+                                <div class="col-12 col-xl-6">
+                                    <p class="chart-title" style="color:#bf360c">
+                                        ● EDEPM<sub>H</sub> over Distance (p=@_exponentP, T=@_exposureTimeHours h)
+                                    </p>
+                                    <RadzenChart Style="height:280px">
+                                        <RadzenLineSeries Data="@_medepmHPlotData" CategoryProperty="X" ValueProperty="Y"
+                                                          Title="EDEPM_H" Smooth="true" Stroke="#bf360c" StrokeWidth="2">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
+                                        <RadzenCategoryAxis FormatString="{0:F0}">
+                                            <RadzenAxisTitle Text="Distance from centre line [m]" />
+                                        </RadzenCategoryAxis>
+                                        <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                            <RadzenAxisTitle Text="(A/m)^p·s" />
+                                            <RadzenGridLines Visible="true" />
+                                        </RadzenValueAxis>
+                                    </RadzenChart>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>x [m]</th>
+                                            <th>E<sub>avg</sub> [V/m]</th>
+                                            <th>H<sub>avg</sub> [A/m]</th>
+                                            <th>EDEPE<br /><small class="text-muted">E<sup>p</sup>·T</small></th>
+                                            <th>EDEPM<sub>H</sub><br /><small class="text-muted">H<sup>p</sup>·T</small></th>
+                                            <th>E<sub>eq</sub> [V/m]</th>
+                                            <th>H<sub>eq</sub> [A/m]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var d in _exposureData)
+                                        {
+                                            <tr>
+                                                <td>@d.Point.X.ToString("F1")</td>
+                                                <td>@d.EAverage.ToString("G4")</td>
+                                                <td>@d.HAverage.ToString("G4")</td>
+                                                <td>@d.Edepe.ToString("G4")</td>
+                                                <td>@d.EdepmH.ToString("G4")</td>
+                                                <td>@d.EEquivalent.ToString("G4")</td>
+                                                <td>@d.HEquivalent.ToString("G4")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
                 </div>
             </div>
         }
-    </div>
-</div>
 
-<!-- ═══════════════════════ 3. EXPOSURE SETTINGS ════════════════ -->
-<div class="card mb-3">
-    <div class="card-header"><h5 class="mb-0">3. Exposure Settings</h5></div>
-    <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-auto">
-                <label class="form-label mb-1">Exposure time T [h]</label>
-                <input class="form-control form-control-sm" style="width:110px" @bind="_exposureTimeHours" />
+    </div><!-- /calc-main -->
+
+    <div class="col-12 col-xl-4 calc-sidebar">
+
+        <!-- GEOMETRY PREVIEW -->
+        <div class="section-card mb-4">
+            <div class="section-header">
+                <span class="sidebar-header-label">Geometry Preview</span>
+                <span class="ms-auto text-muted" style="font-size:0.75rem">cross-section view</span>
             </div>
-            <div class="col-auto">
-                <label class="form-label mb-1">Exponent p</label>
-                <input class="form-control form-control-sm" style="width:80px" @bind="_exponentP" />
+            <div class="section-body p-2">
+                <RadzenChart Style="height:300px">
+                    @for (int i = 0; i < _conductors.Count; i++)
+                    {
+                        var idx      = i;
+                        var c        = _conductors[idx];
+                        var color    = GetConductorColor(idx);
+                        var geomData = new List<GeometryPoint> { new(c.X, c.Y) };
+                        <RadzenScatterSeries Data="@geomData"
+                                             CategoryProperty="GX"
+                                             ValueProperty="GY"
+                                             Title="@($"{c.Id} ({c.X},{c.Y})m")"
+                                             Fill="@color"
+                                             Stroke="@color">
+                        </RadzenScatterSeries>
+                    }
+                    <RadzenLineSeries Data="@ObsLevelLineData"
+                                      CategoryProperty="GX"
+                                      ValueProperty="GY"
+                                      Title="obs. level"
+                                      Stroke="#90A4AE"
+                                      StrokeWidth="1.5"
+                                      LineType="LineType.Dashed">
+                        <RadzenMarkers MarkerType="MarkerType.None" />
+                    </RadzenLineSeries>
+                    <RadzenCategoryAxis>
+                        <RadzenAxisTitle Text="x [m]" />
+                    </RadzenCategoryAxis>
+                    <RadzenValueAxis Min="0">
+                        <RadzenAxisTitle Text="y [m]" />
+                        <RadzenGridLines Visible="true" />
+                    </RadzenValueAxis>
+                </RadzenChart>
+
+                <div class="geom-legend mt-1">
+                    @for (int i = 0; i < _conductors.Count; i++)
+                    {
+                        var idx   = i;
+                        var c     = _conductors[idx];
+                        var color = GetConductorColor(idx);
+                        <span class="legend-item">
+                            <span class="legend-dot" style="background:@color"></span>
+                            @c.Id (@c.X,@c.Y)m
+                        </span>
+                    }
+                    <span class="legend-item">
+                        <span class="legend-dash"></span>
+                        obs. level
+                    </span>
+                </div>
             </div>
-            <div class="col-auto text-muted small pb-1">
-                T = @((int)(_exposureTimeHours * 3600)) s
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <span class="sidebar-header-label">Configuration Summary</span>
+            </div>
+            <div class="section-body">
+                <div class="config-row">
+                    <span class="config-label">Conductors</span>
+                    <span class="config-value">@_conductors.Count</span>
+                </div>
+                <div class="config-row">
+                    <span class="config-label">Observation</span>
+                    <span class="config-value">
+                        @(_mode == ObsMode.Profile
+                            ? $"Horiz. @ y={_profY} m"
+                            : $"Point ({_ptX}, {_ptY}) m")
+                    </span>
+                </div>
+                @if (_mode == ObsMode.Profile)
+                {
+                    <div class="config-row">
+                        <span class="config-label">Profile range</span>
+                        <span class="config-value">[@_profXMin, @_profXMax] m × @_profSteps pts</span>
+                    </div>
+                }
+                <div class="config-row">
+                    <span class="config-label">Exposure time</span>
+                    <span class="config-value">@_exposureTimeHours h (p=@_exponentP)</span>
+                </div>
+                @if (_conductors.Any())
+                {
+                    <div class="config-row">
+                        <span class="config-label">Max U</span>
+                        <span class="config-value">@((_conductors.Max(c => c.VoltageRms) / 1000.0).ToString("F1")) kV</span>
+                    </div>
+                    <div class="config-row">
+                        <span class="config-label">Max I</span>
+                        <span class="config-value">@_conductors.Max(c => c.CurrentRms) A</span>
+                    </div>
+                }
             </div>
         </div>
-        <div class="mt-2 text-muted small">
-            <strong>Constant-field simplification:</strong>
-            MEDEPE<sub>i</sub> = E<sub>i</sub><sup>p</sup> · T &nbsp;|&nbsp;
-            MEDEPM<sub>H,i</sub> = H<sub>i</sub><sup>p</sup> · T &nbsp;|&nbsp;
-            E<sub>eq</sub> = (MEDEPE / T)<sup>1/p</sup> &nbsp;|&nbsp;
-            H<sub>eq</sub> = (MEDEPM<sub>H</sub> / T)<sup>1/p</sup>
-        </div>
-        <div class="mt-1 text-muted small">
-            Recommended: p = 2 (energetic interpretation, higher weight to peak values).
-            p = 1 gives the time-averaged field.
-        </div>
+
     </div>
+
 </div>
-
-<!-- ═══════════════════════ ACTION BUTTONS ══════════════════════ -->
-<div class="d-flex gap-2 mb-4">
-    <button class="btn btn-primary" @onclick="CalculateField">Calculate Field</button>
-    <button class="btn btn-secondary" @onclick="CalculateExposure" disabled="@(_fieldResults is null)">
-        Calculate Exposure
-    </button>
-</div>
-
-<!-- ═══════════════════════ 4. FIELD RESULTS ════════════════════ -->
-@if (_fieldResults is not null)
-{
-    <div class="card mb-3">
-        <div class="card-header"><h5 class="mb-0">Field Results</h5></div>
-        <div class="card-body p-2">
-            @if (_mode == ObsMode.SinglePoint)
-            {
-                var r = _fieldResults[0];
-                <table class="table table-sm table-bordered" style="max-width:500px">
-                    <tbody>
-                        <tr><th colspan="2" class="table-light">Electric field at (@r.Point.X:F2 m, @r.Point.Y:F2 m)</th></tr>
-                        <tr><td>Ex (complex) [V/m]</td><td>@FormatComplex(r.Ex)</td></tr>
-                        <tr><td>Ey (complex) [V/m]</td><td>@FormatComplex(r.Ey)</td></tr>
-                        <tr><td><strong>E (RMS) [V/m]</strong></td><td><strong>@r.E.ToString("G4")</strong></td></tr>
-                        <tr><th colspan="2" class="table-light">Magnetic flux density</th></tr>
-                        <tr><td>Bx (complex) [µT]</td><td>@FormatComplex(r.Bx * 1e6)</td></tr>
-                        <tr><td>By (complex) [µT]</td><td>@FormatComplex(r.By * 1e6)</td></tr>
-                        <tr><td><strong>B (RMS) [µT]</strong></td><td><strong>@((r.B * 1e6).ToString("G4"))</strong></td></tr>
-                        <tr><th colspan="2" class="table-light">Magnetic field strength</th></tr>
-                        <tr><td>Hx (complex) [A/m]</td><td>@FormatComplex(r.Hx)</td></tr>
-                        <tr><td>Hy (complex) [A/m]</td><td>@FormatComplex(r.Hy)</td></tr>
-                        <tr><td><strong>H (RMS) [A/m]</strong></td><td><strong>@r.H.ToString("G4")</strong></td></tr>
-                    </tbody>
-                </table>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>x [m]</th>
-                                <th>E [V/m]</th>
-                                <th>B [µT]</th>
-                                <th>H [A/m]</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var r in _fieldResults)
-                            {
-                                <tr>
-                                    <td>@r.Point.X.ToString("F1")</td>
-                                    <td>@r.E.ToString("G4")</td>
-                                    <td>@((r.B * 1e6).ToString("G4"))</td>
-                                    <td>@r.H.ToString("G4")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-                <!-- RadzenChart – Electric field and Magnetic field strength side by side -->
-                <div class="row mt-3 g-3">
-                    <div class="col-12 col-xl-6">
-                        <h6 class="text-center fw-bold" style="color:#1a237e">Electric Field over Distance</h6>
-                        <RadzenChart Style="height:300px">
-                            <RadzenLineSeries Data="@_ePlotData"
-                                              CategoryProperty="X"
-                                              ValueProperty="Y"
-                                              Title="E [V/m]"
-                                              Smooth="true"
-                                              LineType="LineType.Solid"
-                                              Stroke="#1a237e"
-                                              StrokeWidth="2">
-                                <RadzenMarkers MarkerType="MarkerType.None" />
-                            </RadzenLineSeries>
-                            <RadzenCategoryAxis FormatString="{0:F0}">
-                                <RadzenAxisTitle Text="Distance from centre line [m]" />
-                            </RadzenCategoryAxis>
-                            <RadzenValueAxis Min="0" FormatString="{0:G3}">
-                                <RadzenAxisTitle Text="E [V/m]" />
-                                <RadzenGridLines Visible="true" />
-                            </RadzenValueAxis>
-                        </RadzenChart>
-                    </div>
-                    <div class="col-12 col-xl-6">
-                        <h6 class="text-center fw-bold" style="color:#006064">Magnetic Field Strength over Distance</h6>
-                        <RadzenChart Style="height:300px">
-                            <RadzenLineSeries Data="@_hPlotData"
-                                              CategoryProperty="X"
-                                              ValueProperty="Y"
-                                              Title="H [A/m]"
-                                              Smooth="true"
-                                              LineType="LineType.Solid"
-                                              Stroke="#006064"
-                                              StrokeWidth="2">
-                                <RadzenMarkers MarkerType="MarkerType.None" />
-                            </RadzenLineSeries>
-                            <RadzenCategoryAxis FormatString="{0:F0}">
-                                <RadzenAxisTitle Text="Distance from centre line [m]" />
-                            </RadzenCategoryAxis>
-                            <RadzenValueAxis Min="0" FormatString="{0:G3}">
-                                <RadzenAxisTitle Text="H [A/m]" />
-                                <RadzenGridLines Visible="true" />
-                            </RadzenValueAxis>
-                        </RadzenChart>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-}
-
-<!-- ═══════════════════════ 5. EXPOSURE RESULTS ═════════════════ -->
-@if (_exposureData is not null)
-{
-    <div class="card mb-3">
-        <div class="card-header">
-            <h5 class="mb-0">
-                Exposure Results &mdash;
-                T = @_exposureTimeHours h (@((int)(_exposureTimeHours * 3600)) s),&nbsp;
-                p = @_exponentP
-            </h5>
-        </div>
-        <div class="card-body p-2">
-
-            @if (_mode == ObsMode.SinglePoint && _exposureData.Count == 1)
-            {
-                var d = _exposureData[0];
-                <table class="table table-sm table-bordered" style="max-width:540px">
-                    <tbody>
-                        <tr><th colspan="2" class="table-light">
-                            Point (@d.Point.X.ToString("F2") m, @d.Point.Y.ToString("F2") m)
-                        </th></tr>
-                        <tr><td>E [V/m]</td><td>@d.EAverage.ToString("G4")</td></tr>
-                        <tr><td>H [A/m]</td><td>@d.HAverage.ToString("G4")</td></tr>
-                        <tr><th colspan="2" class="table-light">Electric exposure dose</th></tr>
-                        <tr>
-                            <td>EDEPE = E<sup>@_exponentP</sup> · T</td>
-                            <td>@d.Edepe.ToString("G4") <span class="text-muted small">(V/m)<sup>@_exponentP</sup>·s</span></td>
-                        </tr>
-                        <tr><td>E<sub>eq</sub> = (EDEPE / T)<sup>1/p</sup> [V/m]</td><td>@d.EEquivalent.ToString("G4")</td></tr>
-                        <tr><td>E max / E min [V/m]</td><td>@d.EMax.ToString("G4") / @d.EMin.ToString("G4")</td></tr>
-                        <tr><th colspan="2" class="table-light">Magnetic exposure dose (H)</th></tr>
-                        <tr>
-                            <td>EDEPM<sub>H</sub> = H<sup>@_exponentP</sup> · T</td>
-                            <td>@d.EdepmH.ToString("G4") <span class="text-muted small">(A/m)<sup>@_exponentP</sup>·s</span></td>
-                        </tr>
-                        <tr><td>H<sub>eq</sub> = (EDEPM<sub>H</sub> / T)<sup>1/p</sup> [A/m]</td><td>@d.HEquivalent.ToString("G4")</td></tr>
-                        <tr><td>H max / H min [A/m]</td><td>@d.HMax.ToString("G4") / @d.HMin.ToString("G4")</td></tr>
-                        <tr><td class="text-muted small" colspan="2">
-                            For constant fields: E<sub>eq</sub> = E<sub>avg</sub> = E<sub>max</sub> = E<sub>min</sub> (and same for H).
-                        </td></tr>
-                    </tbody>
-                </table>
-            }
-            else
-            {
-                <!-- Profile table -->
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>x [m]</th>
-                                <th>E<sub>avg</sub> [V/m]</th>
-                                <th>H<sub>avg</sub> [A/m]</th>
-                                <th>EDEPE<br/><small class="text-muted">E<sup>p</sup>·T</small></th>
-                                <th>EDEPM<sub>H</sub><br/><small class="text-muted">H<sup>p</sup>·T</small></th>
-                                <th>E<sub>eq</sub> [V/m]</th>
-                                <th>H<sub>eq</sub> [A/m]</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var d in _exposureData)
-                            {
-                                <tr>
-                                    <td>@d.Point.X.ToString("F1")</td>
-                                    <td>@d.EAverage.ToString("G4")</td>
-                                    <td>@d.HAverage.ToString("G4")</td>
-                                    <td>@d.Edepe.ToString("G4")</td>
-                                    <td>@d.EdepmH.ToString("G4")</td>
-                                    <td>@d.EEquivalent.ToString("G4")</td>
-                                    <td>@d.HEquivalent.ToString("G4")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Exposure dose charts -->
-                <div class="row mt-3 g-3">
-                    <div class="col-12 col-xl-6">
-                        <h6 class="text-center fw-bold" style="color:#6a1b9a">
-                            EDEPE over Distance (p=@_exponentP, T=@_exposureTimeHours h)
-                        </h6>
-                        <RadzenChart Style="height:280px">
-                            <RadzenLineSeries Data="@_edepePlotData"
-                                              CategoryProperty="X"
-                                              ValueProperty="Y"
-                                              Title="MEDEPE"
-                                              Smooth="true"
-                                              LineType="LineType.Solid"
-                                              Stroke="#6a1b9a"
-                                              StrokeWidth="2">
-                                <RadzenMarkers MarkerType="MarkerType.None" />
-                            </RadzenLineSeries>
-                            <RadzenCategoryAxis FormatString="{0:F0}">
-                                <RadzenAxisTitle Text="Distance from centre line [m]" />
-                            </RadzenCategoryAxis>
-                            <RadzenValueAxis Min="0" FormatString="{0:G3}">
-                                <RadzenAxisTitle Text="(V/m)^p·s" />
-                                <RadzenGridLines Visible="true" />
-                            </RadzenValueAxis>
-                        </RadzenChart>
-                    </div>
-                    <div class="col-12 col-xl-6">
-                        <h6 class="text-center fw-bold" style="color:#bf360c">
-                            EDEPM<sub>H</sub> over Distance (p=@_exponentP, T=@_exposureTimeHours h)
-                        </h6>
-                        <RadzenChart Style="height:280px">
-                            <RadzenLineSeries Data="@_medepmHPlotData"
-                                              CategoryProperty="X"
-                                              ValueProperty="Y"
-                                              Title="MEDEPM_H"
-                                              Smooth="true"
-                                              LineType="LineType.Solid"
-                                              Stroke="#bf360c"
-                                              StrokeWidth="2">
-                                <RadzenMarkers MarkerType="MarkerType.None" />
-                            </RadzenLineSeries>
-                            <RadzenCategoryAxis FormatString="{0:F0}">
-                                <RadzenAxisTitle Text="Distance from centre line [m]" />
-                            </RadzenCategoryAxis>
-                            <RadzenValueAxis Min="0" FormatString="{0:G3}">
-                                <RadzenAxisTitle Text="(A/m)^p·s" />
-                                <RadzenGridLines Visible="true" />
-                            </RadzenValueAxis>
-                        </RadzenChart>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-}
 
 @code {
-
-    // ── View models ───────────────────────────────────────────────────────────
-
+    
     /// <summary>Flat UI representation of one conductor / bundle.</summary>
     private class ConductorModel
     {
@@ -441,8 +623,6 @@
         public double     VoltageAngle { get; set; }
         public double     CurrentRms   { get; set; }
         public double     CurrentAngle { get; set; }
-
-        // Inclusion flags
         public bool       IncludeE     { get; set; } = true;
         public bool       IncludeB     { get; set; } = true;
 
@@ -452,12 +632,9 @@
                 Bundle == BundleType.Single ? 0 : Spacing);
     }
 
-    // ExposurePointData record removed — we use ExposureResult from the backend directly.
-
-    private enum ObsMode { SinglePoint, Profile }
-
-    // ── State ─────────────────────────────────────────────────────────────────
-
+    private enum ObsMode    { SinglePoint, Profile }
+    private enum ResultView { Charts, Table }
+    
     private List<ConductorModel> _conductors = new();
 
     private ObsMode _mode      = ObsMode.Profile;
@@ -476,35 +653,57 @@
     private IReadOnlyList<ExposureResult>? _exposureData;   // results from backend CalculateExposure
     private string?                        _errorMessage;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    private ResultView _fieldResultView    = ResultView.Charts;
+    private ResultView _exposureResultView = ResultView.Charts;
+    
+    private static readonly string[] ConductorPalette =
+        { "#1565C0", "#E65100", "#B71C1C", "#2E7D32", "#6A1B9A", "#00695C" };
 
+    private static string GetConductorColor(int index)
+        => ConductorPalette[index % ConductorPalette.Length];
+    
+    private record GeometryPoint(double GX, double GY);
+
+    private List<GeometryPoint> ObsLevelLineData
+    {
+        get
+        {
+            double obsY = _mode == ObsMode.Profile ? _profY : _ptY;
+            double xMin = _conductors.Any() ? _conductors.Min(c => c.X) - 4 : -10;
+            double xMax = _conductors.Any() ? _conductors.Max(c => c.X) + 4 : 10;
+            return new() { new(xMin, obsY), new(xMax, obsY) };
+        }
+    }
+    
+    private double PeakE => _fieldResults?.Max(r => r.E)       ?? 0;
+    private double PeakB => _fieldResults?.Max(r => r.B * 1e6) ?? 0;
+    private double PeakH => _fieldResults?.Max(r => r.H)       ?? 0;
+    
     protected override void OnInitialized() => LoadDefaultConductors();
-
-    // ── Conductor helpers ─────────────────────────────────────────────────────
-
+    
     private void LoadDefaultConductors()
     {
-        double vRms = 110_000.0 / Math.Sqrt(3); // 110 kV line-to-line → phase voltage
+        double vRms = 110_000.0 / Math.Sqrt(3); 
         _conductors =
         [
             new() { Id = "A", X = -4, Y = 12, Bundle = BundleType.Single, SubRadius = 0.015, VoltageRms = vRms, VoltageAngle =    0, CurrentRms = 400, CurrentAngle =    0 },
             new() { Id = "B", X =  0, Y = 12, Bundle = BundleType.Single, SubRadius = 0.015, VoltageRms = vRms, VoltageAngle = -120, CurrentRms = 400, CurrentAngle = -120 },
             new() { Id = "C", X =  4, Y = 12, Bundle = BundleType.Single, SubRadius = 0.015, VoltageRms = vRms, VoltageAngle =  120, CurrentRms = 400, CurrentAngle =  120 },
         ];
-        _fieldResults    = null;
-        _exposureData    = null;
-        _ePlotData       = null;
-        _hPlotData       = null;
-        _edepePlotData   = null;
-        _medepmHPlotData = null;
-        _errorMessage    = null;
+        _fieldResults       = null;
+        _exposureData       = null;
+        _ePlotData          = null;
+        _hPlotData          = null;
+        _edepePlotData      = null;
+        _medepmHPlotData    = null;
+        _errorMessage       = null;
+        _fieldResultView    = ResultView.Charts;
+        _exposureResultView = ResultView.Charts;
     }
 
     private void AddConductor()
         => _conductors.Add(new ConductorModel { Id = $"C{_conductors.Count + 1}" });
-
-    // ── Calculation ───────────────────────────────────────────────────────────
-
+    
     private void CalculateField()
     {
         _errorMessage    = null;
@@ -514,6 +713,7 @@
         _hPlotData       = null;
         _edepePlotData   = null;
         _medepmHPlotData = null;
+        _fieldResultView = ResultView.Charts;
 
         try
         {
@@ -545,10 +745,11 @@
     /// </summary>
     private void CalculateExposure()
     {
-        _errorMessage    = null;
-        _exposureData    = null;
-        _edepePlotData   = null;
-        _medepmHPlotData = null;
+        _errorMessage       = null;
+        _exposureData       = null;
+        _edepePlotData      = null;
+        _medepmHPlotData    = null;
+        _exposureResultView = ResultView.Charts;
 
         if (_fieldResults is null)
         {
@@ -583,9 +784,7 @@
             _errorMessage = ex.Message;
         }
     }
-
-    // ── Build domain objects from view models ─────────────────────────────────
-
+    
     private List<Conductor> BuildConductors()
         => _conductors.Select(c => new Conductor
         {
@@ -613,14 +812,10 @@
             .Select(i => new ObservationPoint(_profXMin + i * dx, _profY))
             .ToList();
     }
-
-    // ── Formatting helpers ────────────────────────────────────────────────────
-
+    
     private static string FormatComplex(Complex c)
         => $"{c.Real:G4} + j{c.Imaginary:G4}";
-
-    // ── Chart data ────────────────────────────────────────────────────────────
-
+    
     /// <summary>Flat x/y pair used by RadzenLineSeries (avoids nested-property reflection issues).</summary>
     private record PlotPoint(double X, double Y);
 
@@ -628,4 +823,71 @@
     private List<PlotPoint>? _hPlotData;
     private List<PlotPoint>? _edepePlotData;
     private List<PlotPoint>? _medepmHPlotData;
+    
+    private async Task ExportFieldResultsCsv()
+    {
+        if (_fieldResults is null) return;
+
+        var sb = new System.Text.StringBuilder();
+
+        if (_mode == ObsMode.SinglePoint)
+        {
+            var r = _fieldResults[0];
+            sb.AppendLine("Quantity,Component,Value,Unit");
+            sb.AppendLine($"Electric field,Ex (real),{r.Ex.Real:G6},V/m");
+            sb.AppendLine($"Electric field,Ex (imag),{r.Ex.Imaginary:G6},V/m");
+            sb.AppendLine($"Electric field,Ey (real),{r.Ey.Real:G6},V/m");
+            sb.AppendLine($"Electric field,Ey (imag),{r.Ey.Imaginary:G6},V/m");
+            sb.AppendLine($"Electric field,E (RMS),{r.E:G6},V/m");
+            sb.AppendLine($"Magnetic flux density,Bx (real),{r.Bx.Real * 1e6:G6},uT");
+            sb.AppendLine($"Magnetic flux density,Bx (imag),{r.Bx.Imaginary * 1e6:G6},uT");
+            sb.AppendLine($"Magnetic flux density,By (real),{r.By.Real * 1e6:G6},uT");
+            sb.AppendLine($"Magnetic flux density,By (imag),{r.By.Imaginary * 1e6:G6},uT");
+            sb.AppendLine($"Magnetic flux density,B (RMS),{r.B * 1e6:G6},uT");
+            sb.AppendLine($"Magnetic field strength,Hx (real),{r.Hx.Real:G6},A/m");
+            sb.AppendLine($"Magnetic field strength,Hx (imag),{r.Hx.Imaginary:G6},A/m");
+            sb.AppendLine($"Magnetic field strength,Hy (real),{r.Hy.Real:G6},A/m");
+            sb.AppendLine($"Magnetic field strength,Hy (imag),{r.Hy.Imaginary:G6},A/m");
+            sb.AppendLine($"Magnetic field strength,H (RMS),{r.H:G6},A/m");
+        }
+        else
+        {
+            sb.AppendLine("x [m],E [V/m],B [uT],H [A/m]");
+            foreach (var r in _fieldResults)
+                sb.AppendLine($"{r.Point.X:G6},{r.E:G6},{r.B * 1e6:G6},{r.H:G6}");
+        }
+
+        await JS.InvokeVoidAsync("downloadFile", "field_results.csv", sb.ToString(), "text/csv;charset=utf-8;");
+    }
+
+    private async Task ExportExposureResultsCsv()
+    {
+        if (_exposureData is null) return;
+
+        var sb = new System.Text.StringBuilder();
+
+        if (_mode == ObsMode.SinglePoint)
+        {
+            var d = _exposureData[0];
+            sb.AppendLine("Quantity,Value,Unit");
+            sb.AppendLine($"E average,{d.EAverage:G6},V/m");
+            sb.AppendLine($"H average,{d.HAverage:G6},A/m");
+            sb.AppendLine($"EDEPE (E^p*T),{d.Edepe:G6},(V/m)^p*s");
+            sb.AppendLine($"E equivalent,{d.EEquivalent:G6},V/m");
+            sb.AppendLine($"E max,{d.EMax:G6},V/m");
+            sb.AppendLine($"E min,{d.EMin:G6},V/m");
+            sb.AppendLine($"EDEPM_H (H^p*T),{d.EdepmH:G6},(A/m)^p*s");
+            sb.AppendLine($"H equivalent,{d.HEquivalent:G6},A/m");
+            sb.AppendLine($"H max,{d.HMax:G6},A/m");
+            sb.AppendLine($"H min,{d.HMin:G6},A/m");
+        }
+        else
+        {
+            sb.AppendLine("x [m],E_avg [V/m],H_avg [A/m],EDEPE [(V/m)^p*s],EDEPM_H [(A/m)^p*s],E_eq [V/m],H_eq [A/m]");
+            foreach (var d in _exposureData)
+                sb.AppendLine($"{d.Point.X:G6},{d.EAverage:G6},{d.HAverage:G6},{d.Edepe:G6},{d.EdepmH:G6},{d.EEquivalent:G6},{d.HEquivalent:G6}");
+        }
+
+        await JS.InvokeVoidAsync("downloadFile", "exposure_results.csv", sb.ToString(), "text/csv;charset=utf-8;");
+    }
 }
