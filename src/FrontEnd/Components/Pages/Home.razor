@@ -1,48 +1,48 @@
 ﻿@page "/"
 @layout HomeLayout
 
-<PageTitle>EM Field Calculator</PageTitle>
+<PageTitle>Kalkulator Pola EM</PageTitle>
 
 <div class="card border-0 shadow-sm text-center" style="max-width:520px; width:100%;">
     <div class="card-body p-4 p-md-5">
 
-        <span class="badge bg-primary mb-3">Power Line EMF Analysis</span>
+        <span class="badge bg-primary mb-3">Analiza pola EMF linii energetycznych</span>
 
-        <h1 class="fw-bold mb-3">Electromagnetic Field Calculator</h1>
+        <h1 class="fw-bold mb-3">Kalkulator Pola Elektromagnetycznego</h1>
 
         <p class="text-muted mb-4">
-            Quasi-static 2-D model for overhead power lines.
-            Compute electric field <strong>E</strong>, magnetic flux density
-            <strong>B</strong> and field strength <strong>H</strong> at any
-            observation point or along a horizontal profile.
+            Quasi-statyczny model 2-D dla napowietrznych linii energetycznych.
+            Oblicz pole elektryczne <strong>E</strong>, indukcję magnetyczną
+            <strong>B</strong> i natężenie pola <strong>H</strong> w dowolnym
+            punkcie obserwacyjnym lub wzdłuż profilu poziomego.
         </p>
 
-        <!-- Feature chips -->
+        <!-- Etykiety funkcji -->
         <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-            <span class="badge bg-light text-dark border fw-normal py-2 px-2">⚡ Electric field E</span>
-            <span class="badge bg-light text-dark border fw-normal py-2 px-2">🧲 Magnetic field B &amp; H</span>
-            <span class="badge bg-light text-dark border fw-normal py-2 px-2">📊 Horizontal profiles</span>
-            <span class="badge bg-light text-dark border fw-normal py-2 px-2">⏱ Exposure doses</span>
-            <span class="badge bg-light text-dark border fw-normal py-2 px-2">📥 CSV export</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">⚡ Pole elektryczne E</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">🧲 Pole magnetyczne B &amp; H</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">📊 Profile poziome</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">⏱ Dawki ekspozycji</span>
+            <span class="badge bg-light text-dark border fw-normal py-2 px-2">📥 Eksport CSV</span>
         </div>
 
-        <!-- CTA -->
+        <!-- Przycisk CTA -->
         <div class="mb-4">
             <a href="/calculator" class="btn btn-primary btn-lg px-5">
-                Open Calculator &rarr;
+                Otwórz kalkulator &rarr;
             </a>
         </div>
 
-        <!-- Steps -->
+        <!-- Kroki -->
         <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 pt-3 border-top text-muted small">
             <span class="step-num">1</span>
-            <span>Define conductors</span>
+            <span>Zdefiniuj przewody</span>
             <span>&#8594;</span>
             <span class="step-num">2</span>
-            <span>Set observation</span>
+            <span>Ustaw obserwację</span>
             <span>&#8594;</span>
             <span class="step-num">3</span>
-            <span>Calculate &amp; export</span>
+            <span>Oblicz i eksportuj</span>
         </div>
 
     </div>

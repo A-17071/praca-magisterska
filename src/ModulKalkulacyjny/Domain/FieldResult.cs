@@ -3,130 +3,136 @@ using System.Numerics;
 namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
-/// All field components and magnitudes calculated at a single observation point
-/// for one set of conductor voltages and currents.
+/// Wszystkie składowe pola i ich wartości skuteczne obliczone w jednym punkcie obserwacyjnym
+/// dla jednego zestawu napięć i prądów przewodów.
 /// </summary>
 public sealed class FieldResult
 {
-    /// <summary>The observation point where the field was calculated.</summary>
+    /// <summary>Punkt obserwacyjny, w którym obliczono pole.</summary>
     public ObservationPoint Point { get; set; }
 
-    // ── Electric field ──────────────────────────────────────────────────────
+    // ── Pole elektryczne ────────────────────────────────────────────────────
 
-    /// <summary>Complex horizontal electric field component Ex [V/m].</summary>
+    /// <summary>Zespolona pozioma składowa pola elektrycznego Ex [V/m].</summary>
     public Complex Ex { get; set; }
 
-    /// <summary>Complex vertical electric field component Ey [V/m].</summary>
+    /// <summary>Zespolona pionowa składowa pola elektrycznego Ey [V/m].</summary>
     public Complex Ey { get; set; }
 
-    /// <summary>RMS electric field magnitude E = √(|Ex|² + |Ey|²) [V/m].</summary>
+    /// <summary>Wartość skuteczna natężenia pola elektrycznego E = √(|Ex|² + |Ey|²) [V/m].</summary>
     public double E { get; set; }
 
-    // ── Magnetic flux density ────────────────────────────────────────────────
+    // ── Indukcja magnetyczna ─────────────────────────────────────────────────
 
-    /// <summary>Complex horizontal magnetic flux density component Bx [T].</summary>
+    /// <summary>Zespolona pozioma składowa indukcji magnetycznej Bx [T].</summary>
     public Complex Bx { get; set; }
 
-    /// <summary>Complex vertical magnetic flux density component By [T].</summary>
+    /// <summary>Zespolona pionowa składowa indukcji magnetycznej By [T].</summary>
     public Complex By { get; set; }
 
-    /// <summary>RMS magnetic flux density magnitude B = √(|Bx|² + |By|²) [T].</summary>
+    /// <summary>Wartość skuteczna indukcji magnetycznej B = √(|Bx|² + |By|²) [T].</summary>
     public double B { get; set; }
 
-    // ── Magnetic field strength ──────────────────────────────────────────────
+    // ── Natężenie pola magnetycznego ─────────────────────────────────────────
 
-    /// <summary>Complex horizontal magnetic field strength component Hx [A/m].</summary>
+    /// <summary>Zespolona pozioma składowa natężenia pola magnetycznego Hx [A/m].</summary>
     public Complex Hx { get; set; }
 
-    /// <summary>Complex vertical magnetic field strength component Hy [A/m].</summary>
+    /// <summary>Zespolona pionowa składowa natężenia pola magnetycznego Hy [A/m].</summary>
     public Complex Hy { get; set; }
 
-    /// <summary>RMS magnetic field strength magnitude H = B / μ₀ [A/m].</summary>
+    /// <summary>Wartość skuteczna natężenia pola magnetycznego H = B / μ₀ [A/m].</summary>
     public double H { get; set; }
 
-    // ── Electric-field ellipse semi-axes ─────────────────────────────────────
+    // ── Półosie elipsy pola elektrycznego ────────────────────────────────────
 
     /// <summary>
-    /// RMS longer semi-axis of the electric-field ellipse [V/m].
-    /// Calculated from the complex phasor components Ex and Ey.
-    /// Describes the maximum effective magnitude of the rotating electric-field vector.
+    /// Dłuższa półoś RMS elipsy pola elektrycznego [V/m].
+    /// Obliczana z zespolonych składowych fazorowych Ex i Ey.
+    /// Opisuje maksymalną skuteczną wartość obracającego się wektora pola elektrycznego.
     /// </summary>
     public double Ea { get; set; }
 
     /// <summary>
-    /// RMS shorter semi-axis of the electric-field ellipse [V/m].
-    /// Calculated from the complex phasor components Ex and Ey.
-    /// Describes the minimum effective magnitude of the rotating electric-field vector.
+    /// Krótsza półoś RMS elipsy pola elektrycznego [V/m].
+    /// Obliczana z zespolonych składowych fazorowych Ex i Ey.
+    /// Opisuje minimalną skuteczną wartość obracającego się wektora pola elektrycznego.
     /// </summary>
     public double Eb { get; set; }
 
     /// <summary>
-    /// Diagnostic verification value reconstructed from the electric-field ellipse semi-axes:
+    /// Diagnostyczna wartość weryfikacyjna odtworzona z półosi elipsy pola elektrycznego:
     /// EFromAxes = √(Ea² + Eb²) [V/m].
-    /// Used only to check consistency between the total RMS electric field and its ellipse representation.
+    /// Używana wyłącznie do sprawdzenia spójności między całkowitym polem elektrycznym RMS
+    /// a jego reprezentacją eliptyczną.
     /// </summary>
     public double EFromAxes { get; set; }
 
     /// <summary>
-    /// Diagnostic verification difference for the electric field:
+    /// Diagnostyczna różnica weryfikacyjna dla pola elektrycznego:
     /// EDifference = |E − EFromAxes| [V/m].
-    /// Used only to check consistency between the total RMS electric field and its ellipse representation.
+    /// Używana wyłącznie do sprawdzenia spójności między całkowitym polem elektrycznym RMS
+    /// a jego reprezentacją eliptyczną.
     /// </summary>
     public double EDifference { get; set; }
 
-    // ── Magnetic-flux-density ellipse semi-axes ──────────────────────────────
+    // ── Półosie elipsy indukcji magnetycznej ─────────────────────────────────
 
     /// <summary>
-    /// RMS longer semi-axis of the magnetic-flux-density ellipse [T].
-    /// Calculated from the complex phasor components Bx and By.
+    /// Dłuższa półoś RMS elipsy indukcji magnetycznej [T].
+    /// Obliczana z zespolonych składowych fazorowych Bx i By.
     /// </summary>
     public double Ba { get; set; }
 
     /// <summary>
-    /// RMS shorter semi-axis of the magnetic-flux-density ellipse [T].
-    /// Calculated from the complex phasor components Bx and By.
+    /// Krótsza półoś RMS elipsy indukcji magnetycznej [T].
+    /// Obliczana z zespolonych składowych fazorowych Bx i By.
     /// </summary>
     public double Bb { get; set; }
 
     /// <summary>
-    /// Diagnostic verification value reconstructed from the magnetic-flux-density ellipse semi-axes:
+    /// Diagnostyczna wartość weryfikacyjna odtworzona z półosi elipsy indukcji magnetycznej:
     /// BFromAxes = √(Ba² + Bb²) [T].
-    /// Used only to check consistency between the total RMS magnetic flux density and its ellipse representation.
+    /// Używana wyłącznie do sprawdzenia spójności między całkowitą indukcją magnetyczną RMS
+    /// a jej reprezentacją eliptyczną.
     /// </summary>
     public double BFromAxes { get; set; }
 
     /// <summary>
-    /// Diagnostic verification difference for the magnetic flux density:
+    /// Diagnostyczna różnica weryfikacyjna dla indukcji magnetycznej:
     /// BDifference = |B − BFromAxes| [T].
-    /// Used only to check consistency between the total RMS magnetic flux density and its ellipse representation.
+    /// Używana wyłącznie do sprawdzenia spójności między całkowitą indukcją magnetyczną RMS
+    /// a jej reprezentacją eliptyczną.
     /// </summary>
     public double BDifference { get; set; }
 
-    // ── Magnetic-field-strength ellipse semi-axes ────────────────────────────
+    // ── Półosie elipsy natężenia pola magnetycznego ──────────────────────────
 
     /// <summary>
-    /// RMS longer semi-axis of the magnetic-field-strength ellipse [A/m].
+    /// Dłuższa półoś RMS elipsy natężenia pola magnetycznego [A/m].
     /// Ha = Ba / μ₀.
     /// </summary>
     public double Ha { get; set; }
 
     /// <summary>
-    /// RMS shorter semi-axis of the magnetic-field-strength ellipse [A/m].
+    /// Krótsza półoś RMS elipsy natężenia pola magnetycznego [A/m].
     /// Hb = Bb / μ₀.
     /// </summary>
     public double Hb { get; set; }
 
     /// <summary>
-    /// Diagnostic verification value reconstructed from the magnetic-field-strength ellipse semi-axes:
+    /// Diagnostyczna wartość weryfikacyjna odtworzona z półosi elipsy natężenia pola magnetycznego:
     /// HFromAxes = √(Ha² + Hb²) [A/m].
-    /// Used only to check consistency between the total RMS magnetic field strength and its ellipse representation.
+    /// Używana wyłącznie do sprawdzenia spójności między całkowitym natężeniem pola magnetycznego RMS
+    /// a jego reprezentacją eliptyczną.
     /// </summary>
     public double HFromAxes { get; set; }
 
     /// <summary>
-    /// Diagnostic verification difference for the magnetic field strength:
+    /// Diagnostyczna różnica weryfikacyjna dla natężenia pola magnetycznego:
     /// HDifference = |H − HFromAxes| [A/m].
-    /// Used only to check consistency between the total RMS magnetic field strength and its ellipse representation.
+    /// Używana wyłącznie do sprawdzenia spójności między całkowitym natężeniem pola magnetycznego RMS
+    /// a jego reprezentacją eliptyczną.
     /// </summary>
     public double HDifference { get; set; }
 }

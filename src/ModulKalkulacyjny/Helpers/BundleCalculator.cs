@@ -3,43 +3,43 @@ using ModulKalkulacyjny.Domain;
 namespace ModulKalkulacyjny.Helpers;
 
 /// <summary>
-/// Calculates the equivalent bundle radius r_eq,k used in the diagonal term of the
-/// electric-potential coefficient matrix:
+/// Oblicza zastępczy promień wiązki r_eq,k używany w wyrazie diagonalnym macierzy
+/// współczynników potencjału elektrycznego:
 ///
 ///   P_kk = (1 / 2πε₀) · ln( 2·y_k / r_eq,k )
 ///
-/// Each bundle is replaced by one equivalent conductor at the bundle centre.
-/// The spacing parameter s_k is the distance between adjacent sub-conductors.
+/// Każda wiązka jest zastępowana jednym równoważnym przewodem w centrum wiązki.
+/// Parametr s_k to odległość między sąsiednimi podprzewodnikami.
 /// </summary>
 public static class BundleCalculator
 {
-    /// <summary>Returns the number of sub-conductors b_k for a given bundle type.</summary>
+    /// <summary>Zwraca liczbę podprzewodników b_k dla danego typu wiązki.</summary>
     public static int SubconductorCount(BundleType bundle) => bundle switch
     {
         BundleType.Single         => 1,
         BundleType.Twin           => 2,
         BundleType.TripleTriangle => 3,
         BundleType.QuadSquare     => 4,
-        _ => throw new ArgumentOutOfRangeException(nameof(bundle), "Unknown bundle type.")
+        _ => throw new ArgumentOutOfRangeException(nameof(bundle), "Nieznany typ wiązki.")
     };
 
     /// <summary>
-    /// Calculates the equivalent bundle radius r_eq,k [m].
+    /// Oblicza zastępczy promień wiązki r_eq,k [m].
     ///
-    /// Formulas (r_s = sub-conductor radius, s = adjacent-conductor spacing):
+    /// Wzory (r_s = promień podprzewodnika, s = rozstaw sąsiednich przewodów):
     ///
     ///   Single:           r_eq = r_s
     ///   Twin:             r_eq = √(r_s · s)
     ///   Triple triangle:  r_eq = (r_s · s²)^(1/3)
     ///   Quad square:      r_eq = (√2 · r_s · s³)^(1/4)
     ///
-    /// The result is passed as the Conductor.Radius to the PotentialMatrixBuilder.
+    /// Wynik jest przekazywany jako Conductor.Radius do PotentialMatrixBuilder.
     /// </summary>
-    /// <param name="bundle">Bundle geometry type.</param>
-    /// <param name="subRadius">Radius of one sub-conductor r_s [m]. Must be positive.</param>
+    /// <param name="bundle">Typ geometryczny wiązki.</param>
+    /// <param name="subRadius">Promień jednego podprzewodnika r_s [m]. Musi być dodatni.</param>
     /// <param name="spacing">
-    ///   Distance between adjacent sub-conductors s_k [m].
-    ///   Ignored for Single; must be positive for all other types.
+    ///   Odległość między sąsiednimi podprzewodnikami s_k [m].
+    ///   Ignorowane dla Single; musi być dodatnie dla wszystkich innych typów.
     /// </param>
     public static double CalculateEquivalentRadius(
         BundleType bundle,
@@ -48,15 +48,15 @@ public static class BundleCalculator
     {
         if (subRadius <= 0)
             throw new ArgumentException(
-                $"Sub-conductor radius must be positive (got {subRadius} m).", nameof(subRadius));
+                $"Promień podprzewodnika musi być dodatni (podano {subRadius} m).", nameof(subRadius));
 
         if (bundle != BundleType.Single && spacing <= 0)
             throw new ArgumentException(
-                $"Bundle spacing must be positive for {bundle} bundle (got {spacing} m).", nameof(spacing));
+                $"Rozstaw wiązki musi być dodatni dla wiązki typu {bundle} (podano {spacing} m).", nameof(spacing));
 
         return bundle switch
         {
-            // r_eq = r_s  (trivial – single wire)
+            // r_eq = r_s  (trivial – pojedynczy przewód)
             BundleType.Single =>
                 subRadius,
 
@@ -72,7 +72,7 @@ public static class BundleCalculator
             BundleType.QuadSquare =>
                 Math.Pow(Math.Sqrt(2.0) * subRadius * Math.Pow(spacing, 3), 0.25),
 
-            _ => throw new ArgumentOutOfRangeException(nameof(bundle), "Unknown bundle type.")
+            _ => throw new ArgumentOutOfRangeException(nameof(bundle), "Nieznany typ wiązki.")
         };
     }
 }

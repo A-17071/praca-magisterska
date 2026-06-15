@@ -5,36 +5,36 @@ using ModulKalkulacyjny.Helpers;
 namespace ModulKalkulacyjny.Solvers;
 
 /// <summary>
-/// Solves for line charge density phasors and calculates the electric field.
+/// Wyznacza fazory liniowej gęstości ładunku i oblicza pole elektryczne.
 ///
-/// Two-step process:
-///   1. Solve  P · q = U  →  line charge densities q
-///   2. For each observation point: E = −∇V  (negative gradient of potential)
+/// Proces dwuetapowy:
+///   1. Rozwiąż  P · q = U  →  liniowe gęstości ładunku q
+///   2. Dla każdego punktu obserwacyjnego: E = −∇V  (ujemny gradient potencjału)
 /// </summary>
 public sealed class ElectricFieldSolver
 {
     private readonly LinearSystemSolver _linSolver = new();
 
     /// <summary>
-    /// Solves the linear system P · q = U to obtain line charge density phasors [C/m].
+    /// Rozwiązuje układ liniowy P · q = U w celu wyznaczenia fazorów liniowej gęstości ładunku [C/m].
     /// </summary>
     public Complex[] SolveLineCharges(double[,] potentialMatrix, Complex[] voltages)
         => _linSolver.Solve(potentialMatrix, voltages);
 
     /// <summary>
-    /// Calculates the complex electric field components, RMS magnitude, and
-    /// the semi-axes of the field ellipse at one observation point.
+    /// Oblicza zespolone składowe pola elektrycznego, wartość skuteczną i
+    /// półosie elipsy pola w jednym punkcie obserwacyjnym.
     ///
-    /// Formula (negative gradient of the scalar potential, including ground-image correction):
+    /// Wzór (ujemny gradient potencjału skalarnego, z korekcją obrazu w ziemi):
     ///
     ///   Ex = (1/2πε₀) · Σ qk · [(x−xk)/Rk² − (x−xk)/R'k²]
     ///   Ey = (1/2πε₀) · Σ qk · [(y−yk)/Rk² − (y+yk)/R'k²]
     ///
-    /// where Rk  = distance to the real conductor k
-    ///       R'k = distance to the image conductor k (located at y = −yk)
+    /// gdzie Rk  = odległość do rzeczywistego przewodu k
+    ///       R'k = odległość do obrazu przewodu k (położonego przy y = −yk)
     ///
-    /// RMS magnitude: E = √(|Ex|² + |Ey|²)
-    /// Ellipse semi-axes Ea ≥ Eb are calculated by FieldEllipseCalculator.
+    /// Wartość skuteczna: E = √(|Ex|² + |Ey|²)
+    /// Półosie elipsy Ea ≥ Eb obliczane przez FieldEllipseCalculator.
     /// </summary>
     public (Complex Ex, Complex Ey, double E, double Ea, double Eb) CalculateAtPoint(
         IReadOnlyList<Conductor> electricConductors,
@@ -51,8 +51,8 @@ public sealed class ElectricFieldSolver
             Complex q = lineCharges[k];
 
             double dx      = point.X - c.X;
-            double dyReal  = point.Y - c.Y;   // Δy to real conductor
-            double dyImage = point.Y + c.Y;   // Δy to image conductor (at −yk)
+            double dyReal  = point.Y - c.Y;   // Δy do rzeczywistego przewodu
+            double dyImage = point.Y + c.Y;   // Δy do obrazu przewodu (przy −yk)
 
             double rReal2  = dx * dx + dyReal  * dyReal;   // Rk²
             double rImage2 = dx * dx + dyImage * dyImage;  // R'k²
@@ -64,10 +64,10 @@ public sealed class ElectricFieldSolver
         ex *= coeff;
         ey *= coeff;
 
-        // E = √(|Ex|² + |Ey|²)  – RMS magnitude (unchanged)
+        // E = √(|Ex|² + |Ey|²)  – wartość skuteczna (niezmieniona)
         double e = Math.Sqrt(ex.Magnitude * ex.Magnitude + ey.Magnitude * ey.Magnitude);
 
-        // Semi-axes of the ellipse traced by the electric-field vector during one period
+        // Półosie elipsy opisywanej przez wektor pola elektrycznego w ciągu jednego okresu
         var (ea, eb) = FieldEllipseCalculator.CalculateAxes(ex, ey);
 
         return (ex, ey, e, ea, eb);

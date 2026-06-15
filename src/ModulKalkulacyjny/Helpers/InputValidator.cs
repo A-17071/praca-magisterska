@@ -3,39 +3,39 @@ using ModulKalkulacyjny.Domain;
 namespace ModulKalkulacyjny.Helpers;
 
 /// <summary>
-/// Validates all input data before starting a calculation.
-/// Throws <see cref="ArgumentException"/> with a descriptive message on the first violated rule.
+/// Waliduje wszystkie dane wejściowe przed rozpoczęciem obliczeń.
+/// Zgłasza <see cref="ArgumentException"/> z opisowym komunikatem przy pierwszym naruszeniu zasady.
 /// </summary>
 public static class InputValidator
 {
-    /// <summary>Checks conductor geometry and phasor values.</summary>
+    /// <summary>Sprawdza geometrię przewodów i wartości fazorów.</summary>
     public static void ValidateConductors(IReadOnlyList<Conductor> conductors)
     {
         if (conductors == null || conductors.Count == 0)
-            throw new ArgumentException("At least one conductor is required.");
+            throw new ArgumentException("Wymagany jest co najmniej jeden przewód.");
 
         foreach (var c in conductors)
         {
             if (!double.IsFinite(c.X) || !double.IsFinite(c.Y))
-                throw new ArgumentException($"Conductor '{c.Id}': coordinates must be finite numbers.");
+                throw new ArgumentException($"Przewód '{c.Id}': współrzędne muszą być skończonymi liczbami.");
 
             if (!double.IsFinite(c.Radius) || c.Radius <= 0)
-                throw new ArgumentException($"Conductor '{c.Id}': radius must be a positive finite number.");
+                throw new ArgumentException($"Przewód '{c.Id}': promień musi być dodatnią liczbą skończoną.");
 
             if (c.Y <= c.Radius)
                 throw new ArgumentException(
-                    $"Conductor '{c.Id}': height y ({c.Y} m) must be greater than radius ({c.Radius} m).");
+                    $"Przewód '{c.Id}': wysokość y ({c.Y} m) musi być większa niż promień ({c.Radius} m).");
 
             if (!double.IsFinite(c.Voltage.Real) || !double.IsFinite(c.Voltage.Imaginary))
-                throw new ArgumentException($"Conductor '{c.Id}': voltage phasor must be finite.");
+                throw new ArgumentException($"Przewód '{c.Id}': fasor napięcia musi być skończony.");
 
             if (!double.IsFinite(c.Current.Real) || !double.IsFinite(c.Current.Imaginary))
-                throw new ArgumentException($"Conductor '{c.Id}': current phasor must be finite.");
+                throw new ArgumentException($"Przewód '{c.Id}': fasor prądu musi być skończony.");
         }
     }
 
     /// <summary>
-    /// Checks that no observation point lies inside or exactly on a conductor.
+    /// Sprawdza, czy żaden punkt obserwacyjny nie leży wewnątrz ani dokładnie na powierzchni przewodu.
     /// </summary>
     public static void ValidateObservationPoints(
         IReadOnlyList<ObservationPoint> points,
@@ -45,7 +45,7 @@ public static class InputValidator
         {
             if (!double.IsFinite(p.X) || !double.IsFinite(p.Y))
                 throw new ArgumentException(
-                    $"Observation point ({p.X}, {p.Y}): coordinates must be finite.");
+                    $"Punkt obserwacyjny ({p.X}, {p.Y}): współrzędne muszą być skończone.");
 
             foreach (var c in conductors)
             {
@@ -53,49 +53,49 @@ public static class InputValidator
 
                 if (dist < c.Radius)
                     throw new ArgumentException(
-                        $"Observation point ({p.X:F2}, {p.Y:F2}) lies inside conductor '{c.Id}'.");
+                        $"Punkt obserwacyjny ({p.X:F2}, {p.Y:F2}) leży wewnątrz przewodu '{c.Id}'.");
 
                 if (dist < 1e-9)
                     throw new ArgumentException(
-                        $"Observation point ({p.X:F2}, {p.Y:F2}) is too close to conductor '{c.Id}'.");
+                        $"Punkt obserwacyjny ({p.X:F2}, {p.Y:F2}) jest zbyt blisko przewodu '{c.Id}'.");
             }
         }
     }
 
     /// <summary>
-    /// Checks that each operating state has the correct number of phasors and a positive duration.
+    /// Sprawdza, czy każdy stan pracy ma poprawną liczbę fazorów i dodatni czas trwania.
     /// </summary>
     public static void ValidateOperatingStates(
         IReadOnlyList<OperatingState> states,
         int conductorCount)
     {
         if (states == null || states.Count == 0)
-            throw new ArgumentException("At least one operating state is required.");
+            throw new ArgumentException("Wymagany jest co najmniej jeden stan pracy.");
 
         for (int i = 0; i < states.Count; i++)
         {
             var s = states[i];
 
             if (s.DurationSeconds <= 0)
-                throw new ArgumentException($"Operating state {i + 1}: duration must be positive.");
+                throw new ArgumentException($"Stan pracy {i + 1}: czas trwania musi być dodatni.");
 
             if (s.Voltages.Count != conductorCount)
                 throw new ArgumentException(
-                    $"Operating state {i + 1}: voltage count ({s.Voltages.Count}) " +
-                    $"must match conductor count ({conductorCount}).");
+                    $"Stan pracy {i + 1}: liczba napięć ({s.Voltages.Count}) " +
+                    $"musi być równa liczbie przewodów ({conductorCount}).");
 
             if (s.Currents.Count != conductorCount)
                 throw new ArgumentException(
-                    $"Operating state {i + 1}: current count ({s.Currents.Count}) " +
-                    $"must match conductor count ({conductorCount}).");
+                    $"Stan pracy {i + 1}: liczba prądów ({s.Currents.Count}) " +
+                    $"musi być równa liczbie przewodów ({conductorCount}).");
         }
     }
 
-    /// <summary>Checks that the exposure exponent p is positive.</summary>
+    /// <summary>Sprawdza, czy wykładnik ekspozycji p jest dodatni.</summary>
     public static void ValidateExponent(double p)
     {
         if (p <= 0)
-            throw new ArgumentException("Exposure exponent p must be positive.");
+            throw new ArgumentException("Wykładnik ekspozycji p musi być dodatni.");
     }
 }
 

@@ -3,21 +3,21 @@ using System.Numerics;
 namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
-/// One time interval during which conductor voltage and current phasors are constant.
-/// Used by the exposure dose calculator to accumulate EDEP = Σ K^p · Δt.
+/// Jeden przedział czasu, w którym fazory napięcia i prądu przewodów są stałe.
+/// Używany przez kalkulator dawki ekspozycji do akumulowania EDEP = Σ K^p · Δt.
 /// </summary>
 public sealed class OperatingState
 {
-    /// <summary>Duration of this interval [s]. Must be positive.</summary>
+    /// <summary>Czas trwania przedziału [s]. Musi być dodatni.</summary>
     public double DurationSeconds { get; set; }
 
     /// <summary>
-    /// RMS voltage phasors for each conductor, in the same order as the conductor list [V].
+    /// Fazory napięcia RMS dla każdego przewodu, w tej samej kolejności co lista przewodów [V].
     /// </summary>
     public IReadOnlyList<Complex> Voltages { get; set; } = Array.Empty<Complex>();
 
     /// <summary>
-    /// RMS current phasors for each conductor, in the same order as the conductor list [A].
+    /// Fazory prądu RMS dla każdego przewodu, w tej samej kolejności co lista przewodów [A].
     /// </summary>
     public IReadOnlyList<Complex> Currents { get; set; } = Array.Empty<Complex>();
 }

@@ -1,8 +1,8 @@
 namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
-/// A point in the 2-D cross-section where the field is to be evaluated.
-/// x is horizontal [m], y is height above ground [m].
+/// Punkt w dwuwymiarowym przekroju poprzecznym, w którym obliczane jest pole.
+/// x – współrzędna pozioma [m], y – wysokość nad ziemią [m].
 /// </summary>
 public readonly record struct ObservationPoint(double X, double Y);
 

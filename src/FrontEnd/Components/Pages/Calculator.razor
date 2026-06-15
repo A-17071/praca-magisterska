@@ -6,38 +6,44 @@
 @inject ElectromagneticFieldCalculator FieldCalculator
 @inject IJSRuntime JS
 
-<PageTitle>EM Field Calculator</PageTitle>
+<PageTitle>@T("Kalkulator Pola EM", "EM Field Calculator")</PageTitle>
 
 <div class="page-header mb-4">
     <div>
-        <h1 class="page-title">Electromagnetic Field Calculator</h1>
-        <p class="page-subtitle">Power line EMF analysis — E, B &amp; H field profiles</p>
+        <h1 class="page-title">@T("Kalkulator Pola Elektromagnetycznego", "Electromagnetic Field Calculator")</h1>
+        <p class="page-subtitle">@T("Analiza pola EMF linii energetycznych — profile E, B i H", "Power line EMF analysis — E, B & H field profiles")</p>
     </div>
-    <div class="status-badge @(_errorMessage is null ? "" : "status-error")">
-        <span class="status-dot"></span>
-        @(_errorMessage is null ? "Ready" : "Error")
+    <div class="d-flex gap-2 align-items-center">
+        <div class="view-toggle">
+            <button class="toggle-btn @(_isPL ? "active" : "")" @onclick="() => _isPL = true">PL</button>
+            <button class="toggle-btn @(!_isPL ? "active" : "")" @onclick="() => _isPL = false">EN</button>
+        </div>
+        <div class="status-badge @(_errorMessage is null ? "" : "status-error")">
+            <span class="status-dot"></span>
+            @(_errorMessage is null ? T("Gotowy", "Ready") : T("Błąd", "Error"))
+        </div>
     </div>
 </div>
 
 @if (_errorMessage is not null)
 {
     <div class="alert alert-danger alert-dismissible mb-3">
-        <strong>Error:</strong> @_errorMessage
+        <strong>@T("Błąd:", "Error:")</strong> @_errorMessage
         <button class="btn-close" @onclick="() => _errorMessage = null"></button>
     </div>
 }
 
 <div class="row g-3 align-items-start">
 
-    <!-- ════════════════ LEFT — INPUTS + RESULTS ════════════════════ -->
+    <!-- ════════════════ LEWA — DANE WEJŚCIOWE + WYNIKI ════════════════════ -->
     <div class="col-12 col-xl-8 order-1 calc-main">
 
         <div class="section-card mb-3">
             <div class="section-header">
                 <span class="section-num">1</span>
-                <h5 class="mb-0">Conductors</h5>
+                <h5 class="mb-0">@T("Przewody", "Conductors")</h5>
                 <button class="btn btn-sm btn-outline-secondary ms-auto" @onclick="LoadDefaultConductors">
-                    ↺ Load 3-phase example
+                    ↺ @T("Załaduj przykład 3-fazowy", "Load 3-phase example")
                 </button>
             </div>
             <div class="section-body p-2">
@@ -48,16 +54,16 @@
                                 <th>Id</th>
                                 <th>x [m]</th>
                                 <th>y [m]</th>
-                                <th>Bundle</th>
+                                <th>@T("Wiązka", "Bundle")</th>
                                 <th>r<sub>s</sub> [m]</th>
                                 <th>s [m]</th>
-                                <th title="Computed equivalent radius (read-only)">r<sub>eq</sub> [m]</th>
+                                <th title="@T("Obliczony zastępczy promień (tylko odczyt)", "Computed equivalent radius (read-only)")">r<sub>eq</sub> [m]</th>
                                 <th>U [V]</th>
                                 <th>φU [°]</th>
                                 <th>I [A]</th>
                                 <th>φI [°]</th>
-                                <th title="Include in electric field">E?</th>
-                                <th title="Include in magnetic field">B?</th>
+                                <th title="@T("Uwzględnij w polu elektrycznym", "Include in electric field")">E?</th>
+                                <th title="@T("Uwzględnij w polu magnetycznym", "Include in magnetic field")">B?</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -75,10 +81,10 @@
                                     <td><input class="form-control form-control-sm" style="width:70px" @bind="c.Y" /></td>
                                     <td>
                                         <select class="form-select form-select-sm" style="width:120px" @bind="c.Bundle">
-                                            <option value="@BundleType.Single">Single</option>
-                                            <option value="@BundleType.Twin">Twin</option>
-                                            <option value="@BundleType.TripleTriangle">Triple (△)</option>
-                                            <option value="@BundleType.QuadSquare">Quad (□)</option>
+                                            <option value="@BundleType.Single">@T("Pojedyncza", "Single")</option>
+                                            <option value="@BundleType.Twin">@T("Podwójna", "Twin")</option>
+                                            <option value="@BundleType.TripleTriangle">@T("Potrójna (△)", "Triple (△)")</option>
+                                            <option value="@BundleType.QuadSquare">@T("Poczwórna (□)", "Quad (□)")</option>
                                         </select>
                                     </td>
                                     <td><input class="form-control form-control-sm" style="width:70px" @bind="c.SubRadius" /></td>
@@ -106,22 +112,22 @@
                         </tbody>
                     </table>
                 </div>
-                <button class="btn btn-sm btn-outline-primary" @onclick="AddConductor">+ Add conductor</button>
+                <button class="btn btn-sm btn-outline-primary" @onclick="AddConductor">+ @T("Dodaj przewód", "Add conductor")</button>
             </div>
         </div>
 
         <div class="section-card mb-3">
             <div class="section-header">
                 <span class="section-num">2</span>
-                <h5 class="mb-0">Observation</h5>
+                <h5 class="mb-0">@T("Obserwacja", "Observation")</h5>
             </div>
             <div class="section-body">
                 <div class="mb-3">
                     <div class="mode-btn-group">
                         <button class="mode-btn @(_mode == ObsMode.SinglePoint ? "active" : "")"
-                                @onclick="() => _mode = ObsMode.SinglePoint">Single Point</button>
+                                @onclick="() => _mode = ObsMode.SinglePoint">@T("Pojedynczy punkt", "Single Point")</button>
                         <button class="mode-btn @(_mode == ObsMode.Profile ? "active" : "")"
-                                @onclick="() => _mode = ObsMode.Profile">Horizontal Profile</button>
+                                @onclick="() => _mode = ObsMode.Profile">@T("Profil poziomy", "Horizontal Profile")</button>
                     </div>
                 </div>
 
@@ -142,9 +148,9 @@
                 {
                     <div class="row g-3">
                         <div class="col-auto">
-                            <label class="form-label small text-muted text-uppercase fw-semibold">Height Y</label>
+                            <label class="form-label small text-muted text-uppercase fw-semibold">@T("Wysokość Y", "Height Y")</label>
                             <input class="form-control form-control-sm" style="width:90px" @bind="_profY" />
-                            <div class="form-text">Observation height</div>
+                            <div class="form-text">@T("Wysokość obserwacji", "Observation height")</div>
                         </div>
                         <div class="col-auto">
                             <label class="form-label small text-muted text-uppercase fw-semibold">X Min</label>
@@ -155,9 +161,9 @@
                             <input class="form-control form-control-sm" style="width:90px" @bind="_profXMax" />
                         </div>
                         <div class="col-auto">
-                            <label class="form-label small text-muted text-uppercase fw-semibold">Steps</label>
+                            <label class="form-label small text-muted text-uppercase fw-semibold">@T("Kroki", "Steps")</label>
                             <input class="form-control form-control-sm" style="width:80px" @bind="_profSteps" />
-                            <div class="form-text">Number of points</div>
+                            <div class="form-text">@T("Liczba punktów", "Number of points")</div>
                         </div>
                     </div>
                 }
@@ -167,12 +173,12 @@
         <div class="section-card mb-3">
             <div class="section-header">
                 <span class="section-num">3</span>
-                <h5 class="mb-0">Exposure Settings</h5>
+                <h5 class="mb-0">@T("Ustawienia ekspozycji", "Exposure Settings")</h5>
             </div>
             <div class="section-body">
                 <div class="row g-3 align-items-start mb-3">
                     <div class="col-auto">
-                        <label class="form-label small text-muted text-uppercase fw-semibold">Exposure Time T</label>
+                        <label class="form-label small text-muted text-uppercase fw-semibold">@T("Czas ekspozycji T", "Exposure Time T")</label>
                         <div class="input-group input-group-sm" style="width:160px">
                             <input class="form-control" @bind="_exposureTimeHours" />
                             <span class="input-group-text">h</span>
@@ -180,28 +186,29 @@
                         <div class="form-text">T = @((int)(_exposureTimeHours * 3600)) s</div>
                     </div>
                     <div class="col-auto">
-                        <label class="form-label small text-muted text-uppercase fw-semibold">Exponent P</label>
+                        <label class="form-label small text-muted text-uppercase fw-semibold">@T("Wykładnik P", "Exponent P")</label>
                         <input class="form-control form-control-sm" style="width:100px" @bind="_exponentP" />
-                        <div class="form-text">p=2 → time-averaged field</div>
+                        <div class="form-text">@T("p=2 → pole uśrednione w czasie", "p=2 → time-averaged field")</div>
                     </div>
                 </div>
                 <div class="info-box">
-                    ⚠ <strong>Constant-field simplification:</strong>
+                    ⚠ <strong>@T("Uproszczenie do stałego pola:", "Constant-field simplification:")</strong>
                     MEDEPE = E<sup>p</sup>·T &nbsp;|&nbsp; MEDEPH = H·T &nbsp;|&nbsp;
                     E<sub>eq</sub> = (MEDEPE/T)<sup>1/p</sup> &nbsp;|&nbsp;
                     H<sub>eq</sub> = (MEDEPH/T)<sup>1/p</sup>.
-                    Recommended: p=2 (energetic interpretation). p=1 gives the time-averaged field.
+                    @T("Zalecane: p=2 (interpretacja energetyczna). p=1 daje pole uśrednione w czasie.",
+                       "Recommended: p=2 (energetic interpretation). p=1 gives the time-averaged field.")
                 </div>
             </div>
         </div>
 
         <div class="d-grid d-sm-flex gap-2 mb-4">
             <button class="btn btn-primary btn-action" @onclick="CalculateField">
-                ⚡ Calculate Field
+                ⚡ @T("Oblicz pole", "Calculate Field")
             </button>
             <button class="btn btn-outline-secondary btn-action" @onclick="CalculateExposure"
                     disabled="@(_fieldResults is null)">
-                Calculate Exposure
+                @T("Oblicz ekspozycję", "Calculate Exposure")
             </button>
         </div>
 
@@ -214,10 +221,10 @@
             <div class="section-card mb-3">
                 <div class="section-header">
                     <h5 class="mb-0">
-                        Field Results
+                        @T("Wyniki pola", "Field Results")
                         @if (_mode == ObsMode.Profile)
                         {
-                            <span class="text-muted fw-normal fs-6"> — @_fieldResults.Count points</span>
+                            <span class="text-muted fw-normal fs-6"> — @_fieldResults.Count @T("punktów", "points")</span>
                         }
                     </h5>
                     <div class="ms-auto d-flex gap-2 align-items-center">
@@ -226,16 +233,16 @@
                             <div class="view-toggle">
                                 <button class="toggle-btn @(_fieldResultView == ResultView.Charts ? "active" : "")"
                                         @onclick="() => _fieldResultView = ResultView.Charts">
-                                    📊 Charts
+                                    📊 @T("Wykresy", "Charts")
                                 </button>
                                 <button class="toggle-btn @(_fieldResultView == ResultView.Table ? "active" : "")"
                                         @onclick="() => _fieldResultView = ResultView.Table">
-                                    ⊞ Table
+                                    ⊞ @T("Tabela", "Table")
                                 </button>
                             </div>
                         }
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="ExportFieldResultsCsv" title="Export results to CSV">
-                            ⬇ Export CSV
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="ExportFieldResultsCsv" title="@T("Eksportuj wyniki do CSV", "Export results to CSV")">
+                            ⬇ @T("Eksport CSV", "Export CSV")
                         </button>
                     </div>
                 </div>
@@ -243,7 +250,7 @@
                     @if (FieldConsistencyWarningMessage is not null)
                     {
                         <div class="alert alert-warning py-2 mb-3">
-                            <strong>Numerical consistency warning:</strong> @FieldConsistencyWarningMessage
+                            <strong>@T("Ostrzeżenie o spójności numerycznej:", "Numerical consistency warning:")</strong> @FieldConsistencyWarningMessage
                         </div>
                     }
 
@@ -252,40 +259,40 @@
                         var r = _fieldResults[0];
                         <table class="table table-sm table-bordered" style="max-width:500px">
                             <tbody>
-                                <tr><th colspan="2" class="table-light">Electric field at (@r.Point.X.ToString("F2") m, @r.Point.Y.ToString("F2") m)</th></tr>
+                                <tr><th colspan="2" class="table-light">@T("Pole elektryczne w", "Electric field at") (@r.Point.X.ToString("F2") m, @r.Point.Y.ToString("F2") m)</th></tr>
                                 <tr><td>Ex [V/m]</td><td>@r.Ex.Magnitude.ToString("G4")</td></tr>
                                 <tr><td>Ey [V/m]</td><td>@r.Ey.Magnitude.ToString("G4")</td></tr>
                                 <tr><td><strong>E [V/m]</strong></td><td><strong>@r.E.ToString("G4")</strong></td></tr>
                                 <tr><td>Ea [V/m]</td><td>@r.Ea.ToString("G4")</td></tr>
                                 <tr><td>Eb [V/m]</td><td>@r.Eb.ToString("G4")</td></tr>
-                                <tr><td>E from axes [V/m]</td><td>@r.EFromAxes.ToString("G4")</td></tr>
-                                <tr><td>|E - E from axes| [V/m]</td><td>@r.EDifference.ToString("G4")</td></tr>
-                                <tr><th colspan="2" class="table-light">Magnetic flux density</th></tr>
+                                <tr><td>@T("E z półosi [V/m]", "E from axes [V/m]")</td><td>@r.EFromAxes.ToString("G4")</td></tr>
+                                <tr><td>|E - @T("E z półosi", "E from axes")| [V/m]</td><td>@r.EDifference.ToString("G4")</td></tr>
+                                <tr><th colspan="2" class="table-light">@T("Indukcja magnetyczna", "Magnetic flux density")</th></tr>
                                 <tr><td>Bx [µT]</td><td>@((r.Bx.Magnitude * 1e6).ToString("G4"))</td></tr>
                                 <tr><td>By [µT]</td><td>@((r.By.Magnitude * 1e6).ToString("G4"))</td></tr>
                                 <tr><td><strong>B [µT]</strong></td><td><strong>@((r.B * 1e6).ToString("G4"))</strong></td></tr>
                                 <tr><td>Ba [µT]</td><td>@((r.Ba * 1e6).ToString("G4"))</td></tr>
                                 <tr><td>Bb [µT]</td><td>@((r.Bb * 1e6).ToString("G4"))</td></tr>
-                                <tr><td>B from axes [µT]</td><td>@((r.BFromAxes * 1e6).ToString("G4"))</td></tr>
-                                <tr><td>|B - B from axes| [µT]</td><td>@((r.BDifference * 1e6).ToString("G4"))</td></tr>
-                                <tr><th colspan="2" class="table-light">Magnetic field strength</th></tr>
+                                <tr><td>@T("B z półosi [µT]", "B from axes [µT]")</td><td>@((r.BFromAxes * 1e6).ToString("G4"))</td></tr>
+                                <tr><td>|B - @T("B z półosi", "B from axes")| [µT]</td><td>@((r.BDifference * 1e6).ToString("G4"))</td></tr>
+                                <tr><th colspan="2" class="table-light">@T("Natężenie pola magnetycznego", "Magnetic field strength")</th></tr>
                                 <tr><td>Hx [A/m]</td><td>@r.Hx.Magnitude.ToString("G4")</td></tr>
                                 <tr><td>Hy [A/m]</td><td>@r.Hy.Magnitude.ToString("G4")</td></tr>
                                 <tr><td><strong>H [A/m]</strong></td><td><strong>@r.H.ToString("G4")</strong></td></tr>
                                 <tr><td>Ha [A/m]</td><td>@r.Ha.ToString("G4")</td></tr>
                                 <tr><td>Hb [A/m]</td><td>@r.Hb.ToString("G4")</td></tr>
-                                <tr><td>H from axes [A/m]</td><td>@r.HFromAxes.ToString("G4")</td></tr>
-                                <tr><td>|H - H from axes| [A/m]</td><td>@r.HDifference.ToString("G4")</td></tr>
+                                <tr><td>@T("H z półosi [A/m]", "H from axes [A/m]")</td><td>@r.HFromAxes.ToString("G4")</td></tr>
+                                <tr><td>|H - @T("H z półosi", "H from axes")| [A/m]</td><td>@r.HDifference.ToString("G4")</td></tr>
                             </tbody>
                         </table>
                     }
                     else
                     {
-                        <!-- Peak stat cards -->
+                        <!-- Karty statystyk szczytowych -->
                         <div class="row g-2 mb-4">
                             <div class="col-12 col-sm-4">
                                 <div class="stat-card" style="border-top-color:#1565C0">
-                                    <div class="stat-label">Peak Electric Field</div>
+                                    <div class="stat-label">@T("Szczytowe natężenie pola elektr.", "Peak Electric Field Strength")</div>
                                     <div class="stat-value" style="color:#1565C0">
                                         @PeakE.ToString("G4") <span class="stat-unit">V/m</span>
                                     </div>
@@ -294,7 +301,7 @@
                             </div>
                             <div class="col-12 col-sm-4">
                                 <div class="stat-card" style="border-top-color:#00838F">
-                                    <div class="stat-label">Peak Magnetic Flux</div>
+                                    <div class="stat-label">@T("Szczytowa indukcja magnetyczna", "Peak Magnetic Flux")</div>
                                     <div class="stat-value" style="color:#00838F">
                                         @PeakB.ToString("G4") <span class="stat-unit">µT</span>
                                     </div>
@@ -303,7 +310,7 @@
                             </div>
                             <div class="col-12 col-sm-4">
                                 <div class="stat-card" style="border-top-color:#E65100">
-                                    <div class="stat-label">Peak Mag. Field Strength</div>
+                                    <div class="stat-label">@T("Szczytowe natężenie pola mag.", "Peak Mag. Field Strength")</div>
                                     <div class="stat-value" style="color:#E65100">
                                         @PeakH.ToString("G4") <span class="stat-unit">A/m</span>
                                     </div>
@@ -316,7 +323,7 @@
                         {
                             <div class="row g-3">
                                 <div class="col-12 col-xl-6">
-                                    <p class="chart-title" style="color:#1565C0">● Electric Field over Distance</p>
+                                    <p class="chart-title" style="color:#1565C0">● @T("Pole elektryczne wzdłuż profilu", "Electric Field over Distance")</p>
                                     <RadzenChart Style="height:380px" AnimationDuration="700">
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="E"
                                                           Title="E [V/m]" Smooth="true" Stroke="#1565C0" StrokeWidth="2">
@@ -331,12 +338,12 @@
                                             <RadzenMarkers MarkerType="MarkerType.None" />
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="EFromAxes"
-                                                          Title="E from axes [V/m]" Smooth="true" Stroke="#0D47A1" StrokeWidth="1.5" LineType="LineType.Dotted">
+                                                          Title="@T("E z półosi [V/m]", "E from axes [V/m]")" Smooth="true" Stroke="#0D47A1" StrokeWidth="1.5" LineType="LineType.Dotted">
                                             <RadzenMarkers MarkerType="MarkerType.None" />
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
-                                            <RadzenAxisTitle Text="Distance from centre line [m]" />
+                                            <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
                                         <RadzenValueAxis Min="0" Max="@EChartMax" FormatString="{0:G4}">
                                             <RadzenAxisTitle Text="E [V/m]" />
@@ -345,7 +352,7 @@
                                     </RadzenChart>
                                 </div>
                                 <div class="col-12 col-xl-6">
-                                    <p class="chart-title" style="color:#00838F">● Magnetic Field Strength over Distance</p>
+                                    <p class="chart-title" style="color:#00838F">● @T("Natężenie pola magnetycznego wzdłuż profilu", "Magnetic Field Strength over Distance")</p>
                                     <RadzenChart Style="height:380px" AnimationDuration="700">
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="H"
                                                           Title="H [A/m]" Smooth="true" Stroke="#00838F" StrokeWidth="2">
@@ -360,12 +367,12 @@
                                             <RadzenMarkers MarkerType="MarkerType.None" />
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="HFromAxes"
-                                                          Title="H from axes [A/m]" Smooth="true" Stroke="#004D40" StrokeWidth="1.5" LineType="LineType.Dotted">
+                                                          Title="@T("H z półosi [A/m]", "H from axes [A/m]")" Smooth="true" Stroke="#004D40" StrokeWidth="1.5" LineType="LineType.Dotted">
                                             <RadzenMarkers MarkerType="MarkerType.None" />
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
-                                            <RadzenAxisTitle Text="Distance from centre line [m]" />
+                                            <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
                                         <RadzenValueAxis Min="0" Max="@HChartMax" FormatString="{0:G4}">
                                             <RadzenAxisTitle Text="H [A/m]" />
@@ -387,21 +394,21 @@
                                             <th>E [V/m]</th>
                                             <th>Ea [V/m]</th>
                                             <th>Eb [V/m]</th>
-                                            <th>E from axes [V/m]</th>
+                                            <th>@T("E z półosi [V/m]", "E from axes [V/m]")</th>
                                             <th>|ΔE| [V/m]</th>
                                             <th>Bx [µT]</th>
                                             <th>By [µT]</th>
                                             <th>B [µT]</th>
                                             <th>Ba [µT]</th>
                                             <th>Bb [µT]</th>
-                                            <th>B from axes [µT]</th>
+                                            <th>@T("B z półosi [µT]", "B from axes [µT]")</th>
                                             <th>|ΔB| [µT]</th>
                                             <th>Hx [A/m]</th>
                                             <th>Hy [A/m]</th>
                                             <th>H [A/m]</th>
                                             <th>Ha [A/m]</th>
                                             <th>Hb [A/m]</th>
-                                            <th>H from axes [A/m]</th>
+                                            <th>@T("H z półosi [A/m]", "H from axes [A/m]")</th>
                                             <th>|ΔH| [A/m]</th>
                                         </tr>
                                     </thead>
@@ -447,7 +454,7 @@
             <div class="section-card mb-3">
                 <div class="section-header">
                     <h5 class="mb-0">
-                        Exposure Results
+                        @T("Wyniki ekspozycji", "Exposure Results")
                         <span class="text-muted fw-normal fs-6"> — T=@_exposureTimeHours h, p=@_exponentP</span>
                     </h5>
                     <div class="ms-auto d-flex gap-2 align-items-center">
@@ -456,16 +463,16 @@
                             <div class="view-toggle">
                                 <button class="toggle-btn @(_exposureResultView == ResultView.Charts ? "active" : "")"
                                         @onclick="() => _exposureResultView = ResultView.Charts">
-                                    📊 Charts
+                                    📊 @T("Wykresy", "Charts")
                                 </button>
                                 <button class="toggle-btn @(_exposureResultView == ResultView.Table ? "active" : "")"
                                         @onclick="() => _exposureResultView = ResultView.Table">
-                                    ⊞ Table
+                                    ⊞ @T("Tabela", "Table")
                                 </button>
                             </div>
                         }
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="ExportExposureResultsCsv" title="Export results to CSV">
-                            ⬇ Export CSV
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="ExportExposureResultsCsv" title="@T("Eksportuj wyniki do CSV", "Export results to CSV")">
+                            ⬇ @T("Eksport CSV", "Export CSV")
                         </button>
                     </div>
                 </div>
@@ -476,18 +483,18 @@
                         <table class="table table-sm table-bordered" style="max-width:540px">
                             <tbody>
                                 <tr><th colspan="2" class="table-light">
-                                    Point (@d.Point.X.ToString("F2") m, @d.Point.Y.ToString("F2") m)
+                                    @T("Punkt", "Point") (@d.Point.X.ToString("F2") m, @d.Point.Y.ToString("F2") m)
                                 </th></tr>
                                 <tr><td>E [V/m]</td><td>@d.EAverage.ToString("G4")</td></tr>
                                 <tr><td>H [A/m]</td><td>@d.HAverage.ToString("G4")</td></tr>
-                                <tr><th colspan="2" class="table-light">Electric exposure dose</th></tr>
+                                <tr><th colspan="2" class="table-light">@T("Dawka ekspozycji elektrycznej", "Electric exposure dose")</th></tr>
                                 <tr>
                                     <td>EDEPE = E<sup>@_exponentP</sup> · T</td>
                                     <td>@d.Edepe.ToString("G4") <span class="text-muted small">(V/m)<sup>@_exponentP</sup>·s</span></td>
                                 </tr>
                                 <tr><td>E<sub>eq</sub> = (EDEPE / T)<sup>1/p</sup> [V/m]</td><td>@d.EEquivalent.ToString("G4")</td></tr>
                                 <tr><td>E max / E min [V/m]</td><td>@d.EMax.ToString("G4") / @d.EMin.ToString("G4")</td></tr>
-                                <tr><th colspan="2" class="table-light">Magnetic exposure dose (H)</th></tr>
+                                <tr><th colspan="2" class="table-light">@T("Dawka ekspozycji magnetycznej (H)", "Magnetic exposure dose (H)")</th></tr>
                                 <tr>
                                     <td>EDEPM<sub>H</sub> = H<sup>@_exponentP</sup> · T</td>
                                     <td>@d.EdepmH.ToString("G4") <span class="text-muted small">(A/m)<sup>@_exponentP</sup>·s</span></td>
@@ -495,7 +502,8 @@
                                 <tr><td>H<sub>eq</sub> = (EDEPM<sub>H</sub> / T)<sup>1/p</sup> [A/m]</td><td>@d.HEquivalent.ToString("G4")</td></tr>
                                 <tr><td>H max / H min [A/m]</td><td>@d.HMax.ToString("G4") / @d.HMin.ToString("G4")</td></tr>
                                 <tr><td class="text-muted small" colspan="2">
-                                    For constant fields: E<sub>eq</sub> = E<sub>avg</sub> = E<sub>max</sub> = E<sub>min</sub> (and same for H).
+                                    @T("Dla stałego pola: E_eq = E_avg = E_max = E_min (analogicznie dla H).",
+                                       "For constant fields: E_eq = E_avg = E_max = E_min (and same for H).")
                                 </td></tr>
                             </tbody>
                         </table>
@@ -507,7 +515,7 @@
                             <div class="row g-3">
                                 <div class="col-12 col-xl-6">
                                     <p class="chart-title" style="color:#6a1b9a">
-                                        ● EDEPE over Distance (p=@_exponentP, T=@_exposureTimeHours h)
+                                        ● EDEPE @T("wzdłuż profilu", "over Distance") (p=@_exponentP, T=@_exposureTimeHours h)
                                     </p>
                                     <RadzenChart Style="height:340px">
                                         <RadzenLineSeries Data="@_edepePlotData" CategoryProperty="X" ValueProperty="Y"
@@ -516,7 +524,7 @@
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
-                                            <RadzenAxisTitle Text="Distance from centre line [m]" />
+                                            <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
                                         <RadzenValueAxis Min="0" Max="@EdepePlotMax" FormatString="{0:G4}">
                                             <RadzenAxisTitle Text="(V/m)^p·s" />
@@ -526,7 +534,7 @@
                                 </div>
                                 <div class="col-12 col-xl-6">
                                     <p class="chart-title" style="color:#bf360c">
-                                        ● EDEPM<sub>H</sub> over Distance (p=@_exponentP, T=@_exposureTimeHours h)
+                                        ● EDEPM<sub>H</sub> @T("wzdłuż profilu", "over Distance") (p=@_exponentP, T=@_exposureTimeHours h)
                                     </p>
                                     <RadzenChart Style="height:340px">
                                         <RadzenLineSeries Data="@_medepmHPlotData" CategoryProperty="X" ValueProperty="Y"
@@ -535,7 +543,7 @@
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
-                                            <RadzenAxisTitle Text="Distance from centre line [m]" />
+                                            <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
                                         <RadzenValueAxis Min="0" Max="@MedepmHPlotMax" FormatString="{0:G4}">
                                             <RadzenAxisTitle Text="(A/m)^p·s" />
@@ -552,8 +560,8 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>x [m]</th>
-                                            <th>E<sub>avg</sub> [V/m]</th>
-                                            <th>H<sub>avg</sub> [A/m]</th>
+                                            <th>E<sub>@T("śr", "avg")</sub> [V/m]</th>
+                                            <th>H<sub>@T("śr", "avg")</sub> [A/m]</th>
                                             <th>EDEPE<br /><small class="text-muted">E<sup>p</sup>·T</small></th>
                                             <th>EDEPM<sub>H</sub><br /><small class="text-muted">H<sup>p</sup>·T</small></th>
                                             <th>E<sub>eq</sub> [V/m]</th>
@@ -586,11 +594,11 @@
 
     <div class="col-12 col-xl-4 order-2 calc-sidebar">
 
-        <!-- GEOMETRY PREVIEW -->
+        <!-- PODGLĄD GEOMETRII -->
         <div class="section-card mb-4">
             <div class="section-header">
-                <span class="sidebar-header-label">Geometry Preview</span>
-                <span class="ms-auto text-muted" style="font-size:0.75rem">cross-section view</span>
+                <span class="sidebar-header-label">@T("Podgląd geometrii", "Geometry Preview")</span>
+                <span class="ms-auto text-muted" style="font-size:0.75rem">@T("widok przekroju", "cross-section view")</span>
             </div>
             <div class="section-body p-2">
                 <RadzenChart Style="height:300px">
@@ -611,7 +619,7 @@
                     <RadzenLineSeries Data="@ObsLevelLineData"
                                       CategoryProperty="GX"
                                       ValueProperty="GY"
-                                      Title="obs. level"
+                                      Title="@T("poz. obs.", "obs. level")"
                                       Stroke="#90A4AE"
                                       StrokeWidth="1.5"
                                       LineType="LineType.Dashed">
@@ -639,7 +647,7 @@
                     }
                     <span class="legend-item">
                         <span class="legend-dash"></span>
-                        obs. level
+                        @T("poz. obs.", "obs. level")
                     </span>
                 </div>
             </div>
@@ -647,30 +655,30 @@
 
         <div class="section-card">
             <div class="section-header">
-                <span class="sidebar-header-label">Configuration Summary</span>
+                <span class="sidebar-header-label">@T("Podsumowanie konfiguracji", "Configuration Summary")</span>
             </div>
             <div class="section-body">
                 <div class="config-row">
-                    <span class="config-label">Conductors</span>
+                    <span class="config-label">@T("Przewody", "Conductors")</span>
                     <span class="config-value">@_conductors.Count</span>
                 </div>
                 <div class="config-row">
-                    <span class="config-label">Observation</span>
+                    <span class="config-label">@T("Obserwacja", "Observation")</span>
                     <span class="config-value">
                         @(_mode == ObsMode.Profile
-                            ? $"Horiz. @ y={_profY} m"
-                            : $"Point ({_ptX}, {_ptY}) m")
+                            ? $"{T("Profil poziomy", "Horiz.")} y={_profY} m"
+                            : $"{T("Punkt", "Point")} ({_ptX}, {_ptY}) m")
                     </span>
                 </div>
                 @if (_mode == ObsMode.Profile)
                 {
                     <div class="config-row">
-                        <span class="config-label">Profile range</span>
-                        <span class="config-value">[@_profXMin, @_profXMax] m × @_profSteps pts</span>
+                        <span class="config-label">@T("Zakres profilu", "Profile range")</span>
+                        <span class="config-value">[@_profXMin, @_profXMax] m × @_profSteps @T("pkt", "pts")</span>
                     </div>
                 }
                 <div class="config-row">
-                    <span class="config-label">Exposure time</span>
+                    <span class="config-label">@T("Czas ekspozycji", "Exposure time")</span>
                     <span class="config-value">@_exposureTimeHours h (p=@_exponentP)</span>
                 </div>
                 @if (_conductors.Any())
@@ -693,19 +701,19 @@
 
 @code {
     
-    /// <summary>Flat UI representation of one conductor / bundle.</summary>
+    /// <summary>Płaska reprezentacja UI jednego przewodu / wiązki.</summary>
     private class ConductorModel
     {
         public string     Id           { get; set; } = "?";
         public double     X            { get; set; }
         public double     Y            { get; set; } = 12;
 
-        // Bundle geometry
+        // Geometria wiązki
         public BundleType Bundle       { get; set; } = BundleType.Single;
-        public double     SubRadius    { get; set; } = 0.015;  // r_s – sub-conductor radius [m]
-        public double     Spacing      { get; set; } = 0.4;    // s   – spacing between adjacent sub-conductors [m]
+        public double     SubRadius    { get; set; } = 0.015;  // r_s – promień podprzewodnika [m]
+        public double     Spacing      { get; set; } = 0.4;    // s   – rozstaw między sąsiednimi podprzewodnikami [m]
 
-        // Electrical state
+        // Stan elektryczny
         public double     VoltageRms   { get; set; }
         public double     VoltageAngle { get; set; }
         public double     CurrentRms   { get; set; }
@@ -713,7 +721,7 @@
         public bool       IncludeE     { get; set; } = true;
         public bool       IncludeB     { get; set; } = true;
 
-        /// <summary>Equivalent bundle radius r_eq computed from bundle parameters (read-only display).</summary>
+        /// <summary>Zastępczy promień wiązki r_eq obliczony z parametrów wiązki (tylko do odczytu).</summary>
         public double EquivalentRadius =>
             BundleCalculator.CalculateEquivalentRadius(Bundle, SubRadius,
                 Bundle == BundleType.Single ? 0 : Spacing);
@@ -721,6 +729,12 @@
 
     private enum ObsMode    { SinglePoint, Profile }
     private enum ResultView { Charts, Table }
+
+    // Przełącznik języka: true = Polski, false = English
+    private bool _isPL = true;
+
+    /// <summary>Pomocnik tłumaczenia – zwraca tekst polski lub angielski w zależności od _isPL.</summary>
+    private string T(string pl, string en) => _isPL ? pl : en;
     
     private List<ConductorModel> _conductors = new();
 
@@ -732,12 +746,12 @@
     private double  _profXMax  =  50;
     private int     _profSteps = 101;
 
-    // Exposure settings
-    private double _exposureTimeHours = 8.0;   // default: 8-hour working day
-    private double _exponentP         = 2.0;   // p=2 → energetic interpretation
+    // Ustawienia ekspozycji
+    private double _exposureTimeHours = 8.0;   // domyślnie: 8-godzinny dzień roboczy
+    private double _exponentP         = 2.0;   // p=2 → interpretacja energetyczna
 
     private IReadOnlyList<FieldResult>?    _fieldResults;
-    private IReadOnlyList<ExposureResult>? _exposureData;   // results from backend CalculateExposure
+    private IReadOnlyList<ExposureResult>? _exposureData;   // wyniki z backendu CalculateExposure
     private string?                        _errorMessage;
 
     private ResultView _fieldResultView    = ResultView.Charts;
@@ -767,17 +781,19 @@
             var warnings = new List<string>();
 
             if (maxEDifference > ElectricTolerance)
-                warnings.Add($"max |ΔE| = {maxEDifference:G4} V/m (tol {ElectricTolerance:G4} V/m)");
+                warnings.Add($"max |ΔE| = {maxEDifference:G4} V/m ({T("tol", "tol")} {ElectricTolerance:G4} V/m)");
 
             if (maxBDifference > MagneticBTolerance)
-                warnings.Add($"max |ΔB| = {(maxBDifference * 1e6):G4} µT (tol {(MagneticBTolerance * 1e6):G4} µT)");
+                warnings.Add($"max |ΔB| = {(maxBDifference * 1e6):G4} µT ({T("tol", "tol")} {(MagneticBTolerance * 1e6):G4} µT)");
 
             if (maxHDifference > MagneticHTolerance)
-                warnings.Add($"max |ΔH| = {maxHDifference:G4} A/m (tol {MagneticHTolerance:G4} A/m)");
+                warnings.Add($"max |ΔH| = {maxHDifference:G4} A/m ({T("tol", "tol")} {MagneticHTolerance:G4} A/m)");
 
             return warnings.Count == 0
                 ? null
-                : $"Reconstructed values from ellipse semi-axes differ from the main totals beyond tolerance: {string.Join("; ", warnings)}. The total E, B, H values and exposure calculations remain unchanged.";
+                : T(
+                    $"Wartości odtworzone z półosi elipsy różnią się od sum głównych ponad tolerancję: {string.Join("; ", warnings)}. Wartości całkowite E, B, H oraz obliczenia ekspozycji pozostają niezmienione.",
+                    $"Reconstructed values from ellipse semi-axes differ from the main totals beyond tolerance: {string.Join("; ", warnings)}. The total E, B, H values and exposure calculations remain unchanged.");
         }
     }
     
@@ -798,7 +814,7 @@
     private double PeakB => _fieldResults?.Max(r => r.B * 1e6) ?? 0;
     private double PeakH => _fieldResults?.Max(r => r.H)       ?? 0;
 
-    // ── Chart Y-axis bounds: 10 % headroom above peak, baseline at 0 ─────────
+    // ── Granice osi Y wykresu: 10% zapas ponad szczyt, podstawa = 0 ──────────
     private double? EChartMax       => _fieldProfileData is null ? null
         : _fieldProfileData.Max(p => new[] { p.E, p.Ea, p.EFromAxes }.Max()) * 1.10;
     private double? HChartMax       => _fieldProfileData is null ? null
@@ -866,14 +882,14 @@
     }
 
     /// <summary>
-    /// Delegates to the backend CalculateExposure engine.
-    /// For constant electrical conditions a single OperatingState with duration T
-    /// is created from the current conductor data. The backend then computes:
+    /// Przekazuje obliczenia do backendu CalculateExposure.
+    /// Dla stałych warunków elektrycznych tworzony jest jeden stan pracy o czasie trwania T
+    /// na podstawie bieżących danych przewodów. Backend oblicza:
     ///   EDEPE   = E^p · T
     ///   EdepmH  = H^p · T
     ///   EAverage, HAverage, EMax, EMin, HMax, HMin
-    ///   EEquivalent = (EDEPE / T)^(1/p)  = E  (constant field)
-    ///   HEquivalent = (EdepmH / T)^(1/p) = H  (constant field)
+    ///   EEquivalent = (EDEPE / T)^(1/p)  = E  (stałe pole)
+    ///   HEquivalent = (EdepmH / T)^(1/p) = H  (stałe pole)
     /// </summary>
     private void CalculateExposure()
     {
@@ -885,7 +901,7 @@
 
         if (_fieldResults is null)
         {
-            _errorMessage = "Calculate the field first before computing exposure.";
+            _errorMessage = T("Najpierw oblicz pole przed obliczaniem ekspozycji.", "Calculate the field first before computing exposure.");
             return;
         }
 
@@ -894,7 +910,7 @@
             var conductors = BuildConductors();
             var points     = BuildPoints();
 
-            // Single operating state = current conductor data for the full exposure duration T
+            // Jeden stan pracy = bieżące dane przewodów przez cały czas ekspozycji T
             double t = _exposureTimeHours * 3600.0;
             var state = new OperatingState
             {
@@ -923,7 +939,7 @@
             Id                     = c.Id,
             X                      = c.X,
             Y                      = c.Y,
-            // Compute equivalent radius from bundle geometry; Single uses SubRadius directly.
+            // Oblicz zastępczy promień z geometrii wiązki; Single używa SubRadius bezpośrednio.
             Radius                 = BundleCalculator.CalculateEquivalentRadius(
                                          c.Bundle, c.SubRadius,
                                          c.Bundle == BundleType.Single ? 0 : c.Spacing),
@@ -945,13 +961,13 @@
             .ToList();
     }
     
-    /// <summary>Multi-series profile point for all field profile charts.</summary>
+    /// <summary>Punkt profilu z wieloma seriami dla wszystkich wykresów profilu pola.</summary>
     private record FieldProfilePlotPoint(double X,
                                          double E, double Ea, double Eb, double EFromAxes,
                                          double BMicroTesla, double BFromAxesMicroTesla,
                                          double H, double Ha, double Hb, double HFromAxes);
 
-    /// <summary>Single-value plot point used by exposure charts.</summary>
+    /// <summary>Punkt o jednej wartości używany przez wykresy ekspozycji.</summary>
     private record PlotPoint(double X, double Y);
 
     private List<FieldProfilePlotPoint>? _fieldProfileData;

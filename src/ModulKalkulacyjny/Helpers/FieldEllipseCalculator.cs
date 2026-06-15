@@ -3,57 +3,56 @@ using System.Numerics;
 namespace ModulKalkulacyjny.Helpers;
 
 /// <summary>
-/// Calculates the RMS semi-axes of the ellipse traced by a 2-D sinusoidal field vector
-/// during one period.
+/// Oblicza półosie RMS elipsy opisywanej przez dwuwymiarowy sinusoidalny wektor pola
+/// w ciągu jednego okresu.
 ///
-/// When the horizontal and vertical components of a field have different phase angles
-/// the tip of the field vector traces an ellipse. This class implements the semi-axis
-/// calculation using the decomposition into two oppositely rotating circular components
-/// F1 and F2, as given in the reference literature:
+/// Gdy pozioma i pionowa składowa pola mają różne kąty fazowe,
+/// koniec wektora pola opisuje elipsę. Klasa implementuje obliczanie półosi
+/// metodą rozkładu na dwa przeciwbieżnie obracające się składniki kołowe
+/// F1 i F2, zgodnie z literaturą:
 ///
-///   F1 = 0.5 · (Fy + j·Fx)          — positive-rotation component
-///   F2 = 0.5 · (conj(Fy) + j·conj(Fx)) — negative-rotation component
+///   F1 = 0.5 · (Fy + j·Fx)                       — składnik o dodatnim kierunku obrotu
+///   F2 = 0.5 · (conj(Fy) + j·conj(Fx))           — składnik o ujemnym kierunku obrotu
 ///
 ///   MajorAxis = |F1| + |F2|
 ///   MinorAxis = ||F1| − |F2||
 ///
-/// The two circular components have the same magnitude only when the field vector
-/// traces a circle (MinorAxis = 0). They are equal in magnitude and anti-phase only
-/// when the field is linearly polarised (MinorAxis = MajorAxis / √2 in that limit).
+/// Oba składniki mają jednakową amplitudę tylko wtedy, gdy wektor pola opisuje okrąg
+/// (MinorAxis = 0). Są równe i przeciwfazowe tylko dla pola liniowo spolaryzowanego.
 /// </summary>
 public static class FieldEllipseCalculator
 {
     /// <summary>
-    /// Returns the RMS longer (major) and shorter (minor) semi-axes of the field ellipse.
+    /// Zwraca dłuższą (major) i krótszą (minor) półoś RMS elipsy pola.
     ///
-    /// The method follows the book notation:
+    /// Metoda stosuje notację z literatury:
     ///   F1 = 0.5 * (Fy  +  j * Fx)
     ///   F2 = 0.5 * (Fy* +  j * Fx*)
     ///   MajorAxis = |F1| + |F2|
     ///   MinorAxis = ||F1| - |F2||
     ///
-    /// Usage:
-    ///   Electric field  — call with (Ex, Ey), result = (Ea, Eb) [V/m]
-    ///   Magnetic field  — call with (Bx, By), result = (Ba, Bb) [T]
+    /// Użycie:
+    ///   Pole elektryczne  — wywołaj z (Ex, Ey), wynik = (Ea, Eb) [V/m]
+    ///   Pole magnetyczne  — wywołaj z (Bx, By), wynik = (Ba, Bb) [T]
     /// </summary>
-    /// <param name="fx">Complex RMS phasor of the horizontal (x) component.</param>
-    /// <param name="fy">Complex RMS phasor of the vertical   (y) component.</param>
-    /// <returns>(MajorAxis, MinorAxis) in the same units as the input phasors.</returns>
+    /// <param name="fx">Zespolony fasor RMS poziomej składowej (x).</param>
+    /// <param name="fy">Zespolony fasor RMS pionowej składowej (y).</param>
+    /// <returns>(MajorAxis, MinorAxis) w tych samych jednostkach co dane wejściowe.</returns>
     public static (double MajorAxis, double MinorAxis) CalculateAxes(Complex fx, Complex fy)
     {
         Complex j = Complex.ImaginaryOne;
 
-        // Positive-rotation circular component
+        // Składnik kołowy o dodatnim kierunku obrotu
         Complex f1 = 0.5 * (fy + j * fx);
 
-        // Negative-rotation circular component (uses conjugates)
+        // Składnik kołowy o ujemnym kierunku obrotu (używa sprzężeń)
         Complex f2 = 0.5 * (Complex.Conjugate(fy) + j * Complex.Conjugate(fx));
 
         double f1Mag = f1.Magnitude;
         double f2Mag = f2.Magnitude;
 
-        // The longer semi-axis is the sum of the two circular amplitudes;
-        // the shorter semi-axis is their absolute difference.
+        // Dłuższa półoś to suma amplitud dwóch składników kołowych;
+        // krótsza półoś to ich wartość bezwzględna różnicy.
         double majorAxis = f1Mag + f2Mag;
         double minorAxis = Math.Abs(f1Mag - f2Mag);
 

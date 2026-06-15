@@ -5,22 +5,22 @@ using ModulKalkulacyjny.Helpers;
 namespace ModulKalkulacyjny.Solvers;
 
 /// <summary>
-/// Calculates the magnetic flux density B and magnetic field strength H
-/// at observation points using the Biot-Savart law for infinite line currents.
+/// Oblicza indukcję magnetyczną B i natężenie pola magnetycznego H
+/// w punktach obserwacyjnych metodą Biota-Savarta dla nieskończonych przewodów liniowych.
 ///
 ///   Bx = −(μ₀/2π) · Σ Ik · (y−yk) / Rk²
 ///   By =  (μ₀/2π) · Σ Ik · (x−xk) / Rk²
 ///
-/// where Rk² = (x−xk)² + (y−yk)²
+/// gdzie Rk² = (x−xk)² + (y−yk)²
 ///
-/// Magnetic field strength (in air, μ ≈ μ₀):
+/// Natężenie pola magnetycznego (w powietrzu, μ ≈ μ₀):
 ///   Hx = Bx / μ₀,  Hy = By / μ₀,  H = B / μ₀
 /// </summary>
 public sealed class MagneticFieldSolver
 {
     /// <summary>
-    /// Calculates B (magnetic flux density), H (magnetic field strength), and
-    /// the semi-axes of both field ellipses at the given observation point.
+    /// Oblicza B (indukcja magnetyczna), H (natężenie pola magnetycznego) oraz
+    /// półosie obu elips pola w danym punkcie obserwacyjnym.
     /// </summary>
     public (Complex Bx, Complex By, double B, Complex Hx, Complex Hy, double H,
             double Ba, double Bb, double Ha, double Hb)
@@ -42,15 +42,15 @@ public sealed class MagneticFieldSolver
             by +=  coeff * c.Current * (dx / r2);
         }
 
-        // RMS magnitude: B = √(|Bx|² + |By|²)  (unchanged)
+        // Wartość skuteczna: B = √(|Bx|² + |By|²)  (niezmieniona)
         double b = Math.Sqrt(bx.Magnitude * bx.Magnitude + by.Magnitude * by.Magnitude);
 
-        // H = B / μ₀  (valid in air where μ ≈ μ₀)
+        // H = B / μ₀  (obowiązuje w powietrzu gdzie μ ≈ μ₀)
         Complex hx = bx / PhysicalConstants.Mu0;
         Complex hy = by / PhysicalConstants.Mu0;
         double  h  = b  / PhysicalConstants.Mu0;
 
-        // Semi-axes of the ellipse traced by the magnetic-field vector during one period
+        // Półosie elipsy opisywanej przez wektor pola magnetycznego w ciągu jednego okresu
         var (ba, bb) = FieldEllipseCalculator.CalculateAxes(bx, by);
         double ha = ba / PhysicalConstants.Mu0;
         double hb = bb / PhysicalConstants.Mu0;

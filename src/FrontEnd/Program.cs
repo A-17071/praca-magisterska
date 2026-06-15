@@ -5,28 +5,31 @@ using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Razor components with interactive server rendering.
+// Dodaj komponenty Razor z interaktywnym renderowaniem po stronie serwera.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Register the electromagnetic field calculator as a singleton (it is stateless).
+// Zarejestruj kalkulator pola elektromagnetycznego jako singleton (jest bezstanowy).
 builder.Services.AddSingleton<ElectromagneticFieldCalculator>();
 
-// Register Radzen component services (required for charts and other Radzen components).
+// Zarejestruj usługi komponentów Radzen (wymagane dla wykresów i innych komponentów Radzen).
 builder.Services.AddRadzenComponents();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Konfiguracja potoku przetwarzania żądań HTTP.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    // Domyślna wartość HSTS wynosi 30 dni. W środowisku produkcyjnym można ją zmienić – zob. https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 
+// UseStaticFiles zapewnia obsługę plików statycznych bez fingerprintingu jako fallback,
+// gdy manifest MapStaticAssets nie został jeszcze wygenerowany (np. na świeżo sklonowanym projekcie).
+app.UseStaticFiles();
 
 app.UseAntiforgery();
 

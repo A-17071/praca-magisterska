@@ -3,33 +3,33 @@ using System.Numerics;
 namespace ModulKalkulacyjny.Domain;
 
 /// <summary>
-/// Represents a single conductor in the overhead power line cross-section model.
-/// Stores both geometry and electrical state (RMS phasors).
+/// Reprezentuje pojedynczy przewód w modelu przekroju poprzecznego napowietrznej linii energetycznej.
+/// Przechowuje zarówno geometrię, jak i stan elektryczny (fazory RMS).
 /// </summary>
 public sealed class Conductor
 {
-    /// <summary>User-defined label for the conductor (e.g. "A", "B", "C").</summary>
+    /// <summary>Etykieta przewodu zdefiniowana przez użytkownika (np. „A", „B", „C").</summary>
     public string Id { get; set; } = string.Empty;
 
-    /// <summary>Horizontal coordinate [m].</summary>
+    /// <summary>Współrzędna pozioma [m].</summary>
     public double X { get; set; }
 
-    /// <summary>Height above ground [m]. Must be greater than the radius.</summary>
+    /// <summary>Wysokość nad ziemią [m]. Musi być większa niż promień.</summary>
     public double Y { get; set; }
 
-    /// <summary>Conductor radius or equivalent bundle radius [m].</summary>
+    /// <summary>Promień przewodu lub zastępczy promień wiązki [m].</summary>
     public double Radius { get; set; }
 
-    /// <summary>Phase-to-ground RMS voltage phasor [V].</summary>
+    /// <summary>Fasor napięcia fazowo-ziemnego RMS [V].</summary>
     public Complex Voltage { get; set; }
 
-    /// <summary>RMS current phasor [A].</summary>
+    /// <summary>Fasor prądu RMS [A].</summary>
     public Complex Current { get; set; }
 
-    /// <summary>Whether this conductor is included in the electric field calculation.</summary>
+    /// <summary>Czy przewód jest uwzględniany w obliczeniach pola elektrycznego.</summary>
     public bool IncludeInElectricField { get; set; } = true;
 
-    /// <summary>Whether this conductor is included in the magnetic field calculation.</summary>
+    /// <summary>Czy przewód jest uwzględniany w obliczeniach pola magnetycznego.</summary>
     public bool IncludeInMagneticField { get; set; } = true;
 }
 

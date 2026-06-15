@@ -3,27 +3,27 @@ using System.Numerics;
 namespace ModulKalkulacyjny.Solvers;
 
 /// <summary>
-/// Solves a real square linear system A · x = b where b (and therefore x) is a complex vector.
+/// Rozwiązuje rzeczywisty kwadratowy układ liniowy A · x = b, gdzie b (i zatem x) jest wektorem zespolonym.
 ///
-/// Strategy: since A is real, the system decouples into two real systems:
+/// Strategia: ponieważ A jest rzeczywista, układ rozdziela się na dwa rzeczywiste układy:
 ///   A · Re(x) = Re(b)
 ///   A · Im(x) = Im(b)
-/// Both are solved with the same LU factorisation (Gaussian elimination + partial pivoting).
+/// Oba są rozwiązywane przy użyciu tej samej faktoryzacji LU (eliminacja Gaussa z częściowym wyborem pivota).
 /// </summary>
 public sealed class LinearSystemSolver
 {
     /// <summary>
-    /// Solves A · x = b and returns x.
-    /// Throws <see cref="InvalidOperationException"/> if the matrix is singular.
+    /// Rozwiązuje A · x = b i zwraca x.
+    /// Zgłasza <see cref="InvalidOperationException"/> gdy macierz jest osobliwa.
     /// </summary>
     public Complex[] Solve(double[,] matrix, Complex[] rhs)
     {
         int n = rhs.Length;
 
         if (matrix.GetLength(0) != n || matrix.GetLength(1) != n)
-            throw new ArgumentException("Matrix dimensions must match the RHS vector length.");
+            throw new ArgumentException("Wymiary macierzy muszą odpowiadać długości wektora prawej strony.");
 
-        // Split complex RHS into real and imaginary parts
+        // Rozdziel zespoloną prawą stronę na części rzeczywistą i urojoną
         double[] rhsReal = new double[n];
         double[] rhsImag = new double[n];
         for (int i = 0; i < n; i++)
@@ -32,7 +32,7 @@ public sealed class LinearSystemSolver
             rhsImag[i] = rhs[i].Imaginary;
         }
 
-        // Solve both halves with the same real matrix
+        // Rozwiąż obie połowy przy użyciu tej samej macierzy rzeczywistej
         double[] xReal = GaussElim((double[,])matrix.Clone(), rhsReal);
         double[] xImag = GaussElim((double[,])matrix.Clone(), rhsImag);
 
@@ -43,17 +43,17 @@ public sealed class LinearSystemSolver
         return result;
     }
 
-    // ── Gaussian elimination with partial (row) pivoting ────────────────────
+    // ── Eliminacja Gaussa z częściowym wyborem pivota (wierszowym) ───────────
 
     private static double[] GaussElim(double[,] a, double[] b)
     {
         int n = b.Length;
-        b = (double[])b.Clone(); // work on a copy
+        b = (double[])b.Clone(); // praca na kopii
 
-        // Forward elimination
+        // Eliminacja w przód
         for (int col = 0; col < n; col++)
         {
-            // Find the row with the largest absolute value in this column (pivot)
+            // Znajdź wiersz z największą wartością bezwzględną w tej kolumnie (pivot)
             int pivotRow = col;
             double pivotVal = Math.Abs(a[col, col]);
             for (int row = col + 1; row < n; row++)
@@ -64,10 +64,10 @@ public sealed class LinearSystemSolver
 
             if (pivotVal < 1e-14)
                 throw new InvalidOperationException(
-                    "Potential coefficient matrix is singular or nearly singular. " +
-                    "Check that conductor radii and heights are valid.");
+                    "Macierz współczynników potencjału jest osobliwa lub prawie osobliwa. " +
+                    "Sprawdź, czy promienie i wysokości przewodów są poprawne.");
 
-            // Swap rows if needed
+            // Zamień wiersze jeśli potrzeba
             if (pivotRow != col)
             {
                 for (int k = 0; k < n; k++)
@@ -75,7 +75,7 @@ public sealed class LinearSystemSolver
                 (b[col], b[pivotRow]) = (b[pivotRow], b[col]);
             }
 
-            // Eliminate entries below the pivot
+            // Wyzeruj elementy poniżej pivota
             for (int row = col + 1; row < n; row++)
             {
                 double factor = a[row, col] / a[col, col];
@@ -85,7 +85,7 @@ public sealed class LinearSystemSolver
             }
         }
 
-        // Back-substitution
+        // Podstawianie wsteczne
         double[] x = new double[n];
         for (int i = n - 1; i >= 0; i--)
         {

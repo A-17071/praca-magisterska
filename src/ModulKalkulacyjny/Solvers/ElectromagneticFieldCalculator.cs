@@ -5,11 +5,11 @@ using ModulKalkulacyjny.Helpers;
 namespace ModulKalkulacyjny.Solvers;
 
 /// <summary>
-/// Main public API for the electromagnetic field calculation engine.
-/// This is the single entry point called by the Blazor front end.
+/// Główne publiczne API silnika obliczeniowego pola elektromagnetycznego.
+/// Jest to jedyny punkt wejściowy wywoływany przez front-end Blazor.
 ///
-/// The class is stateless – all inputs are passed as method parameters
-/// so it is safe to register as a singleton or scoped service.
+/// Klasa jest bezstanowa – wszystkie dane wejściowe są przekazywane jako parametry metod,
+/// dzięki czemu można ją bezpiecznie rejestrować jako usługę singleton lub scoped.
 /// </summary>
 public sealed class ElectromagneticFieldCalculator
 {
@@ -17,10 +17,10 @@ public sealed class ElectromagneticFieldCalculator
     private readonly ElectricFieldSolver    _eSolver       = new();
     private readonly MagneticFieldSolver    _bSolver       = new();
 
-    // ── Helper ───────────────────────────────────────────────────────────────
+    // ── Metoda pomocnicza ────────────────────────────────────────────────────
 
     /// <summary>
-    /// Creates a complex RMS phasor from an RMS magnitude and a phase angle.
+    /// Tworzy zespolony fasor RMS z wartości skutecznej i kąta fazowego.
     ///   phasor = rmsValue · e^(j · angleDegrees · π/180)
     /// </summary>
     public static Complex Phasor(double rmsValue, double angleDegrees)
@@ -29,16 +29,16 @@ public sealed class ElectromagneticFieldCalculator
         return Complex.FromPolarCoordinates(rmsValue, rad);
     }
 
-    // ── Field calculation (single operating state) ───────────────────────────
+    // ── Obliczenia pola (jeden stan pracy) ───────────────────────────────────
 
     /// <summary>
-    /// Calculates electric and magnetic field at every observation point using
-    /// the conductor voltages and currents as they are (single operating state).
+    /// Oblicza pole elektryczne i magnetyczne w każdym punkcie obserwacyjnym
+    /// przy użyciu napięć i prądów przewodów w bieżącym stanie (jeden stan pracy).
     ///
-    /// Algorithm:
-    ///   1. Build potential matrix P.
-    ///   2. Solve P · q = U  for line charge densities q.
-    ///   3. For each point: calculate Ex, Ey, E  and  Bx, By, B, Hx, Hy, H.
+    /// Algorytm:
+    ///   1. Zbuduj macierz potencjałów P.
+    ///   2. Rozwiąż P · q = U  dla liniowych gęstości ładunku q.
+    ///   3. Dla każdego punktu: oblicz Ex, Ey, E  oraz  Bx, By, B, Hx, Hy, H.
     /// </summary>
     public IReadOnlyList<FieldResult> CalculateField(
         IReadOnlyList<Conductor> conductors,
@@ -80,18 +80,18 @@ public sealed class ElectromagneticFieldCalculator
         return results;
     }
 
-    // ── Exposure calculation (multiple operating states) ─────────────────────
+    // ── Obliczenia ekspozycji (wiele stanów pracy) ───────────────────────────
 
     /// <summary>
-    /// Calculates exposure doses and statistics at every observation point
-    /// by iterating over all operating states.
+    /// Oblicza dawki ekspozycji i statystyki w każdym punkcie obserwacyjnym
+    /// przez iterację po wszystkich stanach pracy.
     ///
-    /// For each state j with duration Δtj:
-    ///   EDEP += K^p · Δtj   (energetic exposure dose, discrete integral)
+    /// Dla każdego stanu j o czasie trwania Δtj:
+    ///   EDEP += K^p · Δtj   (energetyczna dawka ekspozycji, całka dyskretna)
     ///
-    /// After the loop:
+    /// Po zakończeniu pętli:
     ///   KAverage    = (Σ K · Δt) / T
-    ///   KEquivalent = (EDEP / T)^(1/p)    (equivalent constant field)
+    ///   KEquivalent = (EDEP / T)^(1/p)    (równoważne stałe pole)
     /// </summary>
     public IReadOnlyList<ExposureResult> CalculateExposure(
         IReadOnlyList<Conductor> conductors,
@@ -106,7 +106,7 @@ public sealed class ElectromagneticFieldCalculator
 
         int n = points.Count;
 
-        // Accumulators
+        // Akumulatory
         double[] edepe  = new double[n];
         double[] edepmB = new double[n];
         double[] edepmH = new double[n];
@@ -122,7 +122,7 @@ public sealed class ElectromagneticFieldCalculator
 
         double totalTime = states.Sum(s => s.DurationSeconds);
 
-        // Create a mutable copy of conductors to apply per-state voltages/currents
+        // Utwórz modyfikowalną kopię przewodów do zastosowania napięć/prądów dla każdego stanu
         var cCopy = conductors.Select(c => new Conductor
         {
             Id = c.Id, X = c.X, Y = c.Y, Radius = c.Radius,
@@ -134,7 +134,7 @@ public sealed class ElectromagneticFieldCalculator
         {
             double dt = state.DurationSeconds;
 
-            // Apply this state's voltages and currents
+            // Zastosuj napięcia i prądy dla bieżącego stanu
             for (int i = 0; i < cCopy.Count; i++)
             {
                 cCopy[i].Voltage = state.Voltages[i];
@@ -164,7 +164,7 @@ public sealed class ElectromagneticFieldCalculator
                 if (h > hMax[i]) hMax[i] = h;
                 if (h < hMin[i]) hMin[i] = h;
 
-                // Weighted sums for time-averaged values
+                // Sumy ważone do obliczenia średnich w czasie
                 sumE[i] += e * dt;
                 sumB[i] += b * dt;
                 sumH[i] += h * dt;
@@ -189,7 +189,7 @@ public sealed class ElectromagneticFieldCalculator
                 EAverage    = totalTime > 0 ? sumE[i] / totalTime : 0,
                 BAverage    = totalTime > 0 ? sumB[i] / totalTime : 0,
                 HAverage    = totalTime > 0 ? sumH[i] / totalTime : 0,
-                // Equivalent constant field: Keq = (EDEP / T)^(1/p)
+                // Równoważne stałe pole: Keq = (EDEP / T)^(1/p)
                 EEquivalent = totalTime > 0 ? Math.Pow(edepe[i]  / totalTime, 1.0 / exponentP) : 0,
                 BEquivalent = totalTime > 0 ? Math.Pow(edepmB[i] / totalTime, 1.0 / exponentP) : 0,
                 HEquivalent = totalTime > 0 ? Math.Pow(edepmH[i] / totalTime, 1.0 / exponentP) : 0,
