@@ -30,7 +30,7 @@
 <div class="row g-3 align-items-start">
 
     <!-- ════════════════ LEFT — INPUTS + RESULTS ════════════════════ -->
-    <div class="col-12 col-xl-8 calc-main">
+    <div class="col-12 col-xl-8 order-1 calc-main">
 
         <div class="section-card mb-3">
             <div class="section-header">
@@ -187,7 +187,7 @@
                 </div>
                 <div class="info-box">
                     ⚠ <strong>Constant-field simplification:</strong>
-                    MEDEPE = E·T &nbsp;|&nbsp; MEDEPH = H·T &nbsp;|&nbsp;
+                    MEDEPE = E<sup>p</sup>·T &nbsp;|&nbsp; MEDEPH = H·T &nbsp;|&nbsp;
                     E<sub>eq</sub> = (MEDEPE/T)<sup>1/p</sup> &nbsp;|&nbsp;
                     H<sub>eq</sub> = (MEDEPH/T)<sup>1/p</sup>.
                     Recommended: p=2 (energetic interpretation). p=1 gives the time-averaged field.
@@ -204,6 +204,10 @@
                 Calculate Exposure
             </button>
         </div>
+
+    </div><!-- /calc-main -->
+
+    <div class="col-12 order-3 pt-3">
 
         @if (_fieldResults is not null)
         {
@@ -236,23 +240,42 @@
                     </div>
                 </div>
                 <div class="section-body">
+                    @if (FieldConsistencyWarningMessage is not null)
+                    {
+                        <div class="alert alert-warning py-2 mb-3">
+                            <strong>Numerical consistency warning:</strong> @FieldConsistencyWarningMessage
+                        </div>
+                    }
+
                     @if (_mode == ObsMode.SinglePoint)
                     {
                         var r = _fieldResults[0];
                         <table class="table table-sm table-bordered" style="max-width:500px">
                             <tbody>
                                 <tr><th colspan="2" class="table-light">Electric field at (@r.Point.X.ToString("F2") m, @r.Point.Y.ToString("F2") m)</th></tr>
-                                <tr><td>Ex (complex) [V/m]</td><td>@FormatComplex(r.Ex)</td></tr>
-                                <tr><td>Ey (complex) [V/m]</td><td>@FormatComplex(r.Ey)</td></tr>
-                                <tr><td><strong>E (RMS) [V/m]</strong></td><td><strong>@r.E.ToString("G4")</strong></td></tr>
+                                <tr><td>Ex [V/m]</td><td>@r.Ex.Magnitude.ToString("G4")</td></tr>
+                                <tr><td>Ey [V/m]</td><td>@r.Ey.Magnitude.ToString("G4")</td></tr>
+                                <tr><td><strong>E [V/m]</strong></td><td><strong>@r.E.ToString("G4")</strong></td></tr>
+                                <tr><td>Ea [V/m]</td><td>@r.Ea.ToString("G4")</td></tr>
+                                <tr><td>Eb [V/m]</td><td>@r.Eb.ToString("G4")</td></tr>
+                                <tr><td>E from axes [V/m]</td><td>@r.EFromAxes.ToString("G4")</td></tr>
+                                <tr><td>|E - E from axes| [V/m]</td><td>@r.EDifference.ToString("G4")</td></tr>
                                 <tr><th colspan="2" class="table-light">Magnetic flux density</th></tr>
-                                <tr><td>Bx (complex) [µT]</td><td>@FormatComplex(r.Bx * 1e6)</td></tr>
-                                <tr><td>By (complex) [µT]</td><td>@FormatComplex(r.By * 1e6)</td></tr>
-                                <tr><td><strong>B (RMS) [µT]</strong></td><td><strong>@((r.B * 1e6).ToString("G4"))</strong></td></tr>
+                                <tr><td>Bx [µT]</td><td>@((r.Bx.Magnitude * 1e6).ToString("G4"))</td></tr>
+                                <tr><td>By [µT]</td><td>@((r.By.Magnitude * 1e6).ToString("G4"))</td></tr>
+                                <tr><td><strong>B [µT]</strong></td><td><strong>@((r.B * 1e6).ToString("G4"))</strong></td></tr>
+                                <tr><td>Ba [µT]</td><td>@((r.Ba * 1e6).ToString("G4"))</td></tr>
+                                <tr><td>Bb [µT]</td><td>@((r.Bb * 1e6).ToString("G4"))</td></tr>
+                                <tr><td>B from axes [µT]</td><td>@((r.BFromAxes * 1e6).ToString("G4"))</td></tr>
+                                <tr><td>|B - B from axes| [µT]</td><td>@((r.BDifference * 1e6).ToString("G4"))</td></tr>
                                 <tr><th colspan="2" class="table-light">Magnetic field strength</th></tr>
-                                <tr><td>Hx (complex) [A/m]</td><td>@FormatComplex(r.Hx)</td></tr>
-                                <tr><td>Hy (complex) [A/m]</td><td>@FormatComplex(r.Hy)</td></tr>
-                                <tr><td><strong>H (RMS) [A/m]</strong></td><td><strong>@r.H.ToString("G4")</strong></td></tr>
+                                <tr><td>Hx [A/m]</td><td>@r.Hx.Magnitude.ToString("G4")</td></tr>
+                                <tr><td>Hy [A/m]</td><td>@r.Hy.Magnitude.ToString("G4")</td></tr>
+                                <tr><td><strong>H [A/m]</strong></td><td><strong>@r.H.ToString("G4")</strong></td></tr>
+                                <tr><td>Ha [A/m]</td><td>@r.Ha.ToString("G4")</td></tr>
+                                <tr><td>Hb [A/m]</td><td>@r.Hb.ToString("G4")</td></tr>
+                                <tr><td>H from axes [A/m]</td><td>@r.HFromAxes.ToString("G4")</td></tr>
+                                <tr><td>|H - H from axes| [A/m]</td><td>@r.HDifference.ToString("G4")</td></tr>
                             </tbody>
                         </table>
                     }
@@ -293,34 +316,60 @@
                         {
                             <div class="row g-3">
                                 <div class="col-12 col-xl-6">
-                                    <p class="chart-title" style="color:#1565C0">● Electric Field E over Distance</p>
-                                    <RadzenChart Style="height:290px">
-                                        <RadzenLineSeries Data="@_ePlotData" CategoryProperty="X" ValueProperty="Y"
+                                    <p class="chart-title" style="color:#1565C0">● Electric Field over Distance</p>
+                                    <RadzenChart Style="height:380px" AnimationDuration="700">
+                                        <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="E"
                                                           Title="E [V/m]" Smooth="true" Stroke="#1565C0" StrokeWidth="2">
                                             <RadzenMarkers MarkerType="MarkerType.None" />
                                         </RadzenLineSeries>
+                                        <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Ea"
+                                                          Title="Ea [V/m]" Smooth="true" Stroke="#42A5F5" StrokeWidth="1.5" LineType="LineType.Dashed">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
+                                        <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Eb"
+                                                          Title="Eb [V/m]" Smooth="true" Stroke="#90CAF9" StrokeWidth="1.5" LineType="LineType.Dashed">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
+                                        <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="EFromAxes"
+                                                          Title="E from axes [V/m]" Smooth="true" Stroke="#0D47A1" StrokeWidth="1.5" LineType="LineType.Dotted">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
+                                            <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="Distance from centre line [m]" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                        <RadzenValueAxis Min="0" Max="@EChartMax" FormatString="{0:G4}">
                                             <RadzenAxisTitle Text="E [V/m]" />
-                                            <RadzenGridLines Visible="true" />
+                                            <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
                                     </RadzenChart>
                                 </div>
                                 <div class="col-12 col-xl-6">
-                                    <p class="chart-title" style="color:#00838F">● Magnetic Field Strength H over Distance</p>
-                                    <RadzenChart Style="height:290px">
-                                        <RadzenLineSeries Data="@_hPlotData" CategoryProperty="X" ValueProperty="Y"
+                                    <p class="chart-title" style="color:#00838F">● Magnetic Field Strength over Distance</p>
+                                    <RadzenChart Style="height:380px" AnimationDuration="700">
+                                        <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="H"
                                                           Title="H [A/m]" Smooth="true" Stroke="#00838F" StrokeWidth="2">
                                             <RadzenMarkers MarkerType="MarkerType.None" />
                                         </RadzenLineSeries>
+                                        <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Ha"
+                                                          Title="Ha [A/m]" Smooth="true" Stroke="#26C6DA" StrokeWidth="1.5" LineType="LineType.Dashed">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
+                                        <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Hb"
+                                                          Title="Hb [A/m]" Smooth="true" Stroke="#80DEEA" StrokeWidth="1.5" LineType="LineType.Dashed">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
+                                        <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="HFromAxes"
+                                                          Title="H from axes [A/m]" Smooth="true" Stroke="#004D40" StrokeWidth="1.5" LineType="LineType.Dotted">
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
+                                            <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="Distance from centre line [m]" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                        <RadzenValueAxis Min="0" Max="@HChartMax" FormatString="{0:G4}">
                                             <RadzenAxisTitle Text="H [A/m]" />
-                                            <RadzenGridLines Visible="true" />
+                                            <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
                                     </RadzenChart>
                                 </div>
@@ -333,9 +382,27 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>x [m]</th>
+                                            <th>Ex [V/m]</th>
+                                            <th>Ey [V/m]</th>
                                             <th>E [V/m]</th>
+                                            <th>Ea [V/m]</th>
+                                            <th>Eb [V/m]</th>
+                                            <th>E from axes [V/m]</th>
+                                            <th>|ΔE| [V/m]</th>
+                                            <th>Bx [µT]</th>
+                                            <th>By [µT]</th>
                                             <th>B [µT]</th>
+                                            <th>Ba [µT]</th>
+                                            <th>Bb [µT]</th>
+                                            <th>B from axes [µT]</th>
+                                            <th>|ΔB| [µT]</th>
+                                            <th>Hx [A/m]</th>
+                                            <th>Hy [A/m]</th>
                                             <th>H [A/m]</th>
+                                            <th>Ha [A/m]</th>
+                                            <th>Hb [A/m]</th>
+                                            <th>H from axes [A/m]</th>
+                                            <th>|ΔH| [A/m]</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -343,9 +410,27 @@
                                         {
                                             <tr>
                                                 <td>@r.Point.X.ToString("F1")</td>
+                                                <td>@r.Ex.Magnitude.ToString("G4")</td>
+                                                <td>@r.Ey.Magnitude.ToString("G4")</td>
                                                 <td>@r.E.ToString("G4")</td>
+                                                <td>@r.Ea.ToString("G4")</td>
+                                                <td>@r.Eb.ToString("G4")</td>
+                                                <td>@r.EFromAxes.ToString("G4")</td>
+                                                <td>@r.EDifference.ToString("G4")</td>
+                                                <td>@((r.Bx.Magnitude * 1e6).ToString("G4"))</td>
+                                                <td>@((r.By.Magnitude * 1e6).ToString("G4"))</td>
                                                 <td>@((r.B * 1e6).ToString("G4"))</td>
+                                                <td>@((r.Ba * 1e6).ToString("G4"))</td>
+                                                <td>@((r.Bb * 1e6).ToString("G4"))</td>
+                                                <td>@((r.BFromAxes * 1e6).ToString("G4"))</td>
+                                                <td>@((r.BDifference * 1e6).ToString("G4"))</td>
+                                                <td>@r.Hx.Magnitude.ToString("G4")</td>
+                                                <td>@r.Hy.Magnitude.ToString("G4")</td>
                                                 <td>@r.H.ToString("G4")</td>
+                                                <td>@r.Ha.ToString("G4")</td>
+                                                <td>@r.Hb.ToString("G4")</td>
+                                                <td>@r.HFromAxes.ToString("G4")</td>
+                                                <td>@r.HDifference.ToString("G4")</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -424,17 +509,18 @@
                                     <p class="chart-title" style="color:#6a1b9a">
                                         ● EDEPE over Distance (p=@_exponentP, T=@_exposureTimeHours h)
                                     </p>
-                                    <RadzenChart Style="height:280px">
+                                    <RadzenChart Style="height:340px">
                                         <RadzenLineSeries Data="@_edepePlotData" CategoryProperty="X" ValueProperty="Y"
                                                           Title="EDEPE" Smooth="true" Stroke="#6a1b9a" StrokeWidth="2">
                                             <RadzenMarkers MarkerType="MarkerType.None" />
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
+                                            <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="Distance from centre line [m]" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                        <RadzenValueAxis Min="0" Max="@EdepePlotMax" FormatString="{0:G4}">
                                             <RadzenAxisTitle Text="(V/m)^p·s" />
-                                            <RadzenGridLines Visible="true" />
+                                            <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
                                     </RadzenChart>
                                 </div>
@@ -442,17 +528,18 @@
                                     <p class="chart-title" style="color:#bf360c">
                                         ● EDEPM<sub>H</sub> over Distance (p=@_exponentP, T=@_exposureTimeHours h)
                                     </p>
-                                    <RadzenChart Style="height:280px">
+                                    <RadzenChart Style="height:340px">
                                         <RadzenLineSeries Data="@_medepmHPlotData" CategoryProperty="X" ValueProperty="Y"
                                                           Title="EDEPM_H" Smooth="true" Stroke="#bf360c" StrokeWidth="2">
                                             <RadzenMarkers MarkerType="MarkerType.None" />
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
+                                            <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="Distance from centre line [m]" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" FormatString="{0:G3}">
+                                        <RadzenValueAxis Min="0" Max="@MedepmHPlotMax" FormatString="{0:G4}">
                                             <RadzenAxisTitle Text="(A/m)^p·s" />
-                                            <RadzenGridLines Visible="true" />
+                                            <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
                                     </RadzenChart>
                                 </div>
@@ -495,9 +582,9 @@
             </div>
         }
 
-    </div><!-- /calc-main -->
+    </div><!-- /results-col -->
 
-    <div class="col-12 col-xl-4 calc-sidebar">
+    <div class="col-12 col-xl-4 order-2 calc-sidebar">
 
         <!-- GEOMETRY PREVIEW -->
         <div class="section-card mb-4">
@@ -659,8 +746,40 @@
     private static readonly string[] ConductorPalette =
         { "#1565C0", "#E65100", "#B71C1C", "#2E7D32", "#6A1B9A", "#00695C" };
 
+    private const double ElectricTolerance  = 1e-6;
+    private const double MagneticBTolerance = 1e-12;
+    private const double MagneticHTolerance = 1e-6;
+
     private static string GetConductorColor(int index)
         => ConductorPalette[index % ConductorPalette.Length];
+
+    private string? FieldConsistencyWarningMessage
+    {
+        get
+        {
+            if (_fieldResults is null || _fieldResults.Count == 0)
+                return null;
+
+            double maxEDifference = _fieldResults.Max(r => r.EDifference);
+            double maxBDifference = _fieldResults.Max(r => r.BDifference);
+            double maxHDifference = _fieldResults.Max(r => r.HDifference);
+
+            var warnings = new List<string>();
+
+            if (maxEDifference > ElectricTolerance)
+                warnings.Add($"max |ΔE| = {maxEDifference:G4} V/m (tol {ElectricTolerance:G4} V/m)");
+
+            if (maxBDifference > MagneticBTolerance)
+                warnings.Add($"max |ΔB| = {(maxBDifference * 1e6):G4} µT (tol {(MagneticBTolerance * 1e6):G4} µT)");
+
+            if (maxHDifference > MagneticHTolerance)
+                warnings.Add($"max |ΔH| = {maxHDifference:G4} A/m (tol {MagneticHTolerance:G4} A/m)");
+
+            return warnings.Count == 0
+                ? null
+                : $"Reconstructed values from ellipse semi-axes differ from the main totals beyond tolerance: {string.Join("; ", warnings)}. The total E, B, H values and exposure calculations remain unchanged.";
+        }
+    }
     
     private record GeometryPoint(double GX, double GY);
 
@@ -678,6 +797,16 @@
     private double PeakE => _fieldResults?.Max(r => r.E)       ?? 0;
     private double PeakB => _fieldResults?.Max(r => r.B * 1e6) ?? 0;
     private double PeakH => _fieldResults?.Max(r => r.H)       ?? 0;
+
+    // ── Chart Y-axis bounds: 10 % headroom above peak, baseline at 0 ─────────
+    private double? EChartMax       => _fieldProfileData is null ? null
+        : _fieldProfileData.Max(p => new[] { p.E, p.Ea, p.EFromAxes }.Max()) * 1.10;
+    private double? HChartMax       => _fieldProfileData is null ? null
+        : _fieldProfileData.Max(p => new[] { p.H, p.Ha, p.HFromAxes }.Max()) * 1.10;
+    private double? EdepePlotMax    => _edepePlotData    is null ? null
+        : _edepePlotData.Max(p => p.Y)    * 1.10;
+    private double? MedepmHPlotMax  => _medepmHPlotData  is null ? null
+        : _medepmHPlotData.Max(p => p.Y)  * 1.10;
     
     protected override void OnInitialized() => LoadDefaultConductors();
     
@@ -692,8 +821,7 @@
         ];
         _fieldResults       = null;
         _exposureData       = null;
-        _ePlotData          = null;
-        _hPlotData          = null;
+        _fieldProfileData   = null;
         _edepePlotData      = null;
         _medepmHPlotData    = null;
         _errorMessage       = null;
@@ -706,14 +834,13 @@
     
     private void CalculateField()
     {
-        _errorMessage    = null;
-        _fieldResults    = null;
-        _exposureData    = null;
-        _ePlotData       = null;
-        _hPlotData       = null;
-        _edepePlotData   = null;
-        _medepmHPlotData = null;
-        _fieldResultView = ResultView.Charts;
+        _errorMessage     = null;
+        _fieldResults     = null;
+        _exposureData     = null;
+        _fieldProfileData = null;
+        _edepePlotData    = null;
+        _medepmHPlotData  = null;
+        _fieldResultView  = ResultView.Charts;
 
         try
         {
@@ -723,8 +850,13 @@
 
             if (_mode == ObsMode.Profile && _fieldResults is not null)
             {
-                _ePlotData = _fieldResults.Select(r => new PlotPoint(r.Point.X, r.E)).ToList();
-                _hPlotData = _fieldResults.Select(r => new PlotPoint(r.Point.X, r.H)).ToList();
+                _fieldProfileData = _fieldResults
+                    .Select(r => new FieldProfilePlotPoint(
+                        r.Point.X,
+                        r.E, r.Ea, r.Eb, r.EFromAxes,
+                        r.B * 1e6, r.BFromAxes * 1e6,
+                        r.H, r.Ha, r.Hb, r.HFromAxes))
+                    .ToList();
             }
         }
         catch (Exception ex)
@@ -813,48 +945,91 @@
             .ToList();
     }
     
-    private static string FormatComplex(Complex c)
-        => $"{c.Real:G4} + j{c.Imaginary:G4}";
-    
-    /// <summary>Flat x/y pair used by RadzenLineSeries (avoids nested-property reflection issues).</summary>
+    /// <summary>Multi-series profile point for all field profile charts.</summary>
+    private record FieldProfilePlotPoint(double X,
+                                         double E, double Ea, double Eb, double EFromAxes,
+                                         double BMicroTesla, double BFromAxesMicroTesla,
+                                         double H, double Ha, double Hb, double HFromAxes);
+
+    /// <summary>Single-value plot point used by exposure charts.</summary>
     private record PlotPoint(double X, double Y);
 
-    private List<PlotPoint>? _ePlotData;
-    private List<PlotPoint>? _hPlotData;
-    private List<PlotPoint>? _edepePlotData;
-    private List<PlotPoint>? _medepmHPlotData;
+    private List<FieldProfilePlotPoint>? _fieldProfileData;
+    private List<PlotPoint>?             _edepePlotData;
+    private List<PlotPoint>?             _medepmHPlotData;
     
     private async Task ExportFieldResultsCsv()
     {
         if (_fieldResults is null) return;
 
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
         var sb = new System.Text.StringBuilder();
 
-        if (_mode == ObsMode.SinglePoint)
+        sb.AppendLine(string.Join(";",
+            "X_m",
+            "Y_m",
+            "Ex_V_per_m",
+            "Ey_V_per_m",
+            "E_V_per_m",
+            "Ea_V_per_m",
+            "Eb_V_per_m",
+            "EFromAxes_V_per_m",
+            "EDifference_V_per_m",
+            "Bx_T",
+            "By_T",
+            "B_T",
+            "Ba_T",
+            "Bb_T",
+            "BFromAxes_T",
+            "BDifference_T",
+            "Bx_uT",
+            "By_uT",
+            "B_uT",
+            "Ba_uT",
+            "Bb_uT",
+            "BFromAxes_uT",
+            "BDifference_uT",
+            "Hx_A_per_m",
+            "Hy_A_per_m",
+            "H_A_per_m",
+            "Ha_A_per_m",
+            "Hb_A_per_m",
+            "HFromAxes_A_per_m",
+            "HDifference_A_per_m"));
+
+        foreach (var r in _fieldResults)
         {
-            var r = _fieldResults[0];
-            sb.AppendLine("Quantity,Component,Value,Unit");
-            sb.AppendLine($"Electric field,Ex (real),{r.Ex.Real:G6},V/m");
-            sb.AppendLine($"Electric field,Ex (imag),{r.Ex.Imaginary:G6},V/m");
-            sb.AppendLine($"Electric field,Ey (real),{r.Ey.Real:G6},V/m");
-            sb.AppendLine($"Electric field,Ey (imag),{r.Ey.Imaginary:G6},V/m");
-            sb.AppendLine($"Electric field,E (RMS),{r.E:G6},V/m");
-            sb.AppendLine($"Magnetic flux density,Bx (real),{r.Bx.Real * 1e6:G6},uT");
-            sb.AppendLine($"Magnetic flux density,Bx (imag),{r.Bx.Imaginary * 1e6:G6},uT");
-            sb.AppendLine($"Magnetic flux density,By (real),{r.By.Real * 1e6:G6},uT");
-            sb.AppendLine($"Magnetic flux density,By (imag),{r.By.Imaginary * 1e6:G6},uT");
-            sb.AppendLine($"Magnetic flux density,B (RMS),{r.B * 1e6:G6},uT");
-            sb.AppendLine($"Magnetic field strength,Hx (real),{r.Hx.Real:G6},A/m");
-            sb.AppendLine($"Magnetic field strength,Hx (imag),{r.Hx.Imaginary:G6},A/m");
-            sb.AppendLine($"Magnetic field strength,Hy (real),{r.Hy.Real:G6},A/m");
-            sb.AppendLine($"Magnetic field strength,Hy (imag),{r.Hy.Imaginary:G6},A/m");
-            sb.AppendLine($"Magnetic field strength,H (RMS),{r.H:G6},A/m");
-        }
-        else
-        {
-            sb.AppendLine("x [m],E [V/m],B [uT],H [A/m]");
-            foreach (var r in _fieldResults)
-                sb.AppendLine($"{r.Point.X:G6},{r.E:G6},{r.B * 1e6:G6},{r.H:G6}");
+            sb.AppendLine(string.Join(";",
+                r.Point.X.ToString("G6", ic),
+                r.Point.Y.ToString("G6", ic),
+                r.Ex.Magnitude.ToString("G6", ic),
+                r.Ey.Magnitude.ToString("G6", ic),
+                r.E.ToString("G6", ic),
+                r.Ea.ToString("G6", ic),
+                r.Eb.ToString("G6", ic),
+                r.EFromAxes.ToString("G6", ic),
+                r.EDifference.ToString("G6", ic),
+                r.Bx.Magnitude.ToString("G6", ic),
+                r.By.Magnitude.ToString("G6", ic),
+                r.B.ToString("G6", ic),
+                r.Ba.ToString("G6", ic),
+                r.Bb.ToString("G6", ic),
+                r.BFromAxes.ToString("G6", ic),
+                r.BDifference.ToString("G6", ic),
+                (r.Bx.Magnitude * 1e6).ToString("G6", ic),
+                (r.By.Magnitude * 1e6).ToString("G6", ic),
+                (r.B * 1e6).ToString("G6", ic),
+                (r.Ba * 1e6).ToString("G6", ic),
+                (r.Bb * 1e6).ToString("G6", ic),
+                (r.BFromAxes * 1e6).ToString("G6", ic),
+                (r.BDifference * 1e6).ToString("G6", ic),
+                r.Hx.Magnitude.ToString("G6", ic),
+                r.Hy.Magnitude.ToString("G6", ic),
+                r.H.ToString("G6", ic),
+                r.Ha.ToString("G6", ic),
+                r.Hb.ToString("G6", ic),
+                r.HFromAxes.ToString("G6", ic),
+                r.HDifference.ToString("G6", ic)));
         }
 
         await JS.InvokeVoidAsync("downloadFile", "field_results.csv", sb.ToString(), "text/csv;charset=utf-8;");
@@ -864,28 +1039,36 @@
     {
         if (_exposureData is null) return;
 
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
         var sb = new System.Text.StringBuilder();
 
         if (_mode == ObsMode.SinglePoint)
         {
             var d = _exposureData[0];
-            sb.AppendLine("Quantity,Value,Unit");
-            sb.AppendLine($"E average,{d.EAverage:G6},V/m");
-            sb.AppendLine($"H average,{d.HAverage:G6},A/m");
-            sb.AppendLine($"EDEPE (E^p*T),{d.Edepe:G6},(V/m)^p*s");
-            sb.AppendLine($"E equivalent,{d.EEquivalent:G6},V/m");
-            sb.AppendLine($"E max,{d.EMax:G6},V/m");
-            sb.AppendLine($"E min,{d.EMin:G6},V/m");
-            sb.AppendLine($"EDEPM_H (H^p*T),{d.EdepmH:G6},(A/m)^p*s");
-            sb.AppendLine($"H equivalent,{d.HEquivalent:G6},A/m");
-            sb.AppendLine($"H max,{d.HMax:G6},A/m");
-            sb.AppendLine($"H min,{d.HMin:G6},A/m");
+            sb.AppendLine("Quantity;Value;Unit");
+            sb.AppendLine($"E average;{d.EAverage.ToString("G6", ic)};V/m");
+            sb.AppendLine($"H average;{d.HAverage.ToString("G6", ic)};A/m");
+            sb.AppendLine($"EDEPE (E^p*T);{d.Edepe.ToString("G6", ic)};(V/m)^p*s");
+            sb.AppendLine($"E equivalent;{d.EEquivalent.ToString("G6", ic)};V/m");
+            sb.AppendLine($"E max;{d.EMax.ToString("G6", ic)};V/m");
+            sb.AppendLine($"E min;{d.EMin.ToString("G6", ic)};V/m");
+            sb.AppendLine($"EDEPM_H (H^p*T);{d.EdepmH.ToString("G6", ic)};(A/m)^p*s");
+            sb.AppendLine($"H equivalent;{d.HEquivalent.ToString("G6", ic)};A/m");
+            sb.AppendLine($"H max;{d.HMax.ToString("G6", ic)};A/m");
+            sb.AppendLine($"H min;{d.HMin.ToString("G6", ic)};A/m");
         }
         else
         {
-            sb.AppendLine("x [m],E_avg [V/m],H_avg [A/m],EDEPE [(V/m)^p*s],EDEPM_H [(A/m)^p*s],E_eq [V/m],H_eq [A/m]");
+            sb.AppendLine("x [m];E_avg [V/m];H_avg [A/m];EDEPE [(V/m)^p*s];EDEPM_H [(A/m)^p*s];E_eq [V/m];H_eq [A/m]");
             foreach (var d in _exposureData)
-                sb.AppendLine($"{d.Point.X:G6},{d.EAverage:G6},{d.HAverage:G6},{d.Edepe:G6},{d.EdepmH:G6},{d.EEquivalent:G6},{d.HEquivalent:G6}");
+                sb.AppendLine(string.Join(";",
+                    d.Point.X.ToString("G6", ic),
+                    d.EAverage.ToString("G6", ic),
+                    d.HAverage.ToString("G6", ic),
+                    d.Edepe.ToString("G6", ic),
+                    d.EdepmH.ToString("G6", ic),
+                    d.EEquivalent.ToString("G6", ic),
+                    d.HEquivalent.ToString("G6", ic)));
         }
 
         await JS.InvokeVoidAsync("downloadFile", "exposure_results.csv", sb.ToString(), "text/csv;charset=utf-8;");

@@ -48,8 +48,7 @@
 }
 
 .calc-sidebar {
-    position: sticky;
-    top: 1rem;
+    position: static;
 }
 
 @media (max-width: 1199px) {

@@ -1,5 +1,6 @@
 using System.Numerics;
 using ModulKalkulacyjny.Domain;
+using ModulKalkulacyjny.Helpers;
 
 namespace ModulKalkulacyjny.Solvers;
 
@@ -18,10 +19,11 @@ namespace ModulKalkulacyjny.Solvers;
 public sealed class MagneticFieldSolver
 {
     /// <summary>
-    /// Calculates B (magnetic flux density) and H (magnetic field strength)
-    /// at the given observation point from all conductors with IncludeInMagneticField = true.
+    /// Calculates B (magnetic flux density), H (magnetic field strength), and
+    /// the semi-axes of both field ellipses at the given observation point.
     /// </summary>
-    public (Complex Bx, Complex By, double B, Complex Hx, Complex Hy, double H)
+    public (Complex Bx, Complex By, double B, Complex Hx, Complex Hy, double H,
+            double Ba, double Bb, double Ha, double Hb)
         CalculateAtPoint(IReadOnlyList<Conductor> conductors, ObservationPoint point)
     {
         Complex bx = Complex.Zero;
@@ -40,7 +42,7 @@ public sealed class MagneticFieldSolver
             by +=  coeff * c.Current * (dx / r2);
         }
 
-        // RMS magnitude: B = √(|Bx|² + |By|²)
+        // RMS magnitude: B = √(|Bx|² + |By|²)  (unchanged)
         double b = Math.Sqrt(bx.Magnitude * bx.Magnitude + by.Magnitude * by.Magnitude);
 
         // H = B / μ₀  (valid in air where μ ≈ μ₀)
@@ -48,7 +50,12 @@ public sealed class MagneticFieldSolver
         Complex hy = by / PhysicalConstants.Mu0;
         double  h  = b  / PhysicalConstants.Mu0;
 
-        return (bx, by, b, hx, hy, h);
+        // Semi-axes of the ellipse traced by the magnetic-field vector during one period
+        var (ba, bb) = FieldEllipseCalculator.CalculateAxes(bx, by);
+        double ha = ba / PhysicalConstants.Mu0;
+        double hb = bb / PhysicalConstants.Mu0;
+
+        return (bx, by, b, hx, hy, h, ba, bb, ha, hb);
     }
 }
 

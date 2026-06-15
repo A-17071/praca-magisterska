@@ -43,5 +43,91 @@ public sealed class FieldResult
 
     /// <summary>RMS magnetic field strength magnitude H = B / μ₀ [A/m].</summary>
     public double H { get; set; }
+
+    // ── Electric-field ellipse semi-axes ─────────────────────────────────────
+
+    /// <summary>
+    /// RMS longer semi-axis of the electric-field ellipse [V/m].
+    /// Calculated from the complex phasor components Ex and Ey.
+    /// Describes the maximum effective magnitude of the rotating electric-field vector.
+    /// </summary>
+    public double Ea { get; set; }
+
+    /// <summary>
+    /// RMS shorter semi-axis of the electric-field ellipse [V/m].
+    /// Calculated from the complex phasor components Ex and Ey.
+    /// Describes the minimum effective magnitude of the rotating electric-field vector.
+    /// </summary>
+    public double Eb { get; set; }
+
+    /// <summary>
+    /// Diagnostic verification value reconstructed from the electric-field ellipse semi-axes:
+    /// EFromAxes = √(Ea² + Eb²) [V/m].
+    /// Used only to check consistency between the total RMS electric field and its ellipse representation.
+    /// </summary>
+    public double EFromAxes { get; set; }
+
+    /// <summary>
+    /// Diagnostic verification difference for the electric field:
+    /// EDifference = |E − EFromAxes| [V/m].
+    /// Used only to check consistency between the total RMS electric field and its ellipse representation.
+    /// </summary>
+    public double EDifference { get; set; }
+
+    // ── Magnetic-flux-density ellipse semi-axes ──────────────────────────────
+
+    /// <summary>
+    /// RMS longer semi-axis of the magnetic-flux-density ellipse [T].
+    /// Calculated from the complex phasor components Bx and By.
+    /// </summary>
+    public double Ba { get; set; }
+
+    /// <summary>
+    /// RMS shorter semi-axis of the magnetic-flux-density ellipse [T].
+    /// Calculated from the complex phasor components Bx and By.
+    /// </summary>
+    public double Bb { get; set; }
+
+    /// <summary>
+    /// Diagnostic verification value reconstructed from the magnetic-flux-density ellipse semi-axes:
+    /// BFromAxes = √(Ba² + Bb²) [T].
+    /// Used only to check consistency between the total RMS magnetic flux density and its ellipse representation.
+    /// </summary>
+    public double BFromAxes { get; set; }
+
+    /// <summary>
+    /// Diagnostic verification difference for the magnetic flux density:
+    /// BDifference = |B − BFromAxes| [T].
+    /// Used only to check consistency between the total RMS magnetic flux density and its ellipse representation.
+    /// </summary>
+    public double BDifference { get; set; }
+
+    // ── Magnetic-field-strength ellipse semi-axes ────────────────────────────
+
+    /// <summary>
+    /// RMS longer semi-axis of the magnetic-field-strength ellipse [A/m].
+    /// Ha = Ba / μ₀.
+    /// </summary>
+    public double Ha { get; set; }
+
+    /// <summary>
+    /// RMS shorter semi-axis of the magnetic-field-strength ellipse [A/m].
+    /// Hb = Bb / μ₀.
+    /// </summary>
+    public double Hb { get; set; }
+
+    /// <summary>
+    /// Diagnostic verification value reconstructed from the magnetic-field-strength ellipse semi-axes:
+    /// HFromAxes = √(Ha² + Hb²) [A/m].
+    /// Used only to check consistency between the total RMS magnetic field strength and its ellipse representation.
+    /// </summary>
+    public double HFromAxes { get; set; }
+
+    /// <summary>
+    /// Diagnostic verification difference for the magnetic field strength:
+    /// HDifference = |H − HFromAxes| [A/m].
+    /// Used only to check consistency between the total RMS magnetic field strength and its ellipse representation.
+    /// </summary>
+    public double HDifference { get; set; }
 }
 

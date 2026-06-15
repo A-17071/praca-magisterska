@@ -56,15 +56,24 @@ public sealed class ElectromagneticFieldCalculator
 
         foreach (var point in points)
         {
-            var (ex, ey, e) = _eSolver.CalculateAtPoint(eConductors, q, point);
-            var (bx, by, b, hx, hy, h) = _bSolver.CalculateAtPoint(conductors, point);
+            var (ex, ey, e, ea, eb)              = _eSolver.CalculateAtPoint(eConductors, q, point);
+            var (bx, by, b, hx, hy, h, ba, bb, ha, hb) = _bSolver.CalculateAtPoint(conductors, point);
+            double eFromAxes = Math.Sqrt(ea * ea + eb * eb);
+            double eDifference = Math.Abs(e - eFromAxes);
+            double bFromAxes = Math.Sqrt(ba * ba + bb * bb);
+            double bDifference = Math.Abs(b - bFromAxes);
+            double hFromAxes = Math.Sqrt(ha * ha + hb * hb);
+            double hDifference = Math.Abs(h - hFromAxes);
 
             results.Add(new FieldResult
             {
                 Point = point,
-                Ex = ex, Ey = ey, E = e,
-                Bx = bx, By = by, B = b,
-                Hx = hx, Hy = hy, H = h
+                Ex = ex, Ey = ey, E = e, Ea = ea, Eb = eb,
+                Bx = bx, By = by, B = b, Ba = ba, Bb = bb,
+                Hx = hx, Hy = hy, H = h, Ha = ha, Hb = hb,
+                EFromAxes = eFromAxes, EDifference = eDifference,
+                BFromAxes = bFromAxes, BDifference = bDifference,
+                HFromAxes = hFromAxes, HDifference = hDifference
             });
         }
 
@@ -140,8 +149,8 @@ public sealed class ElectromagneticFieldCalculator
             for (int i = 0; i < n; i++)
             {
                 var point = points[i];
-                var (_, _, e) = _eSolver.CalculateAtPoint(eConductors, q, point);
-                var (_, _, b, _, _, h) = _bSolver.CalculateAtPoint(cCopy, point);
+                var (_, _, e, _, _)                         = _eSolver.CalculateAtPoint(eConductors, q, point);
+                var (_, _, b, _, _, h, _, _, _, _)          = _bSolver.CalculateAtPoint(cCopy, point);
 
                 // EDEP = Σ K^p · Δt
                 edepe[i]  += Math.Pow(e, exponentP) * dt;

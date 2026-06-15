@@ -1,5 +1,6 @@
 using System.Numerics;
 using ModulKalkulacyjny.Domain;
+using ModulKalkulacyjny.Helpers;
 
 namespace ModulKalkulacyjny.Solvers;
 
@@ -21,7 +22,8 @@ public sealed class ElectricFieldSolver
         => _linSolver.Solve(potentialMatrix, voltages);
 
     /// <summary>
-    /// Calculates the complex electric field components and RMS magnitude at one observation point.
+    /// Calculates the complex electric field components, RMS magnitude, and
+    /// the semi-axes of the field ellipse at one observation point.
     ///
     /// Formula (negative gradient of the scalar potential, including ground-image correction):
     ///
@@ -32,8 +34,9 @@ public sealed class ElectricFieldSolver
     ///       R'k = distance to the image conductor k (located at y = −yk)
     ///
     /// RMS magnitude: E = √(|Ex|² + |Ey|²)
+    /// Ellipse semi-axes Ea ≥ Eb are calculated by FieldEllipseCalculator.
     /// </summary>
-    public (Complex Ex, Complex Ey, double E) CalculateAtPoint(
+    public (Complex Ex, Complex Ey, double E, double Ea, double Eb) CalculateAtPoint(
         IReadOnlyList<Conductor> electricConductors,
         Complex[] lineCharges,
         ObservationPoint point)
@@ -61,9 +64,13 @@ public sealed class ElectricFieldSolver
         ex *= coeff;
         ey *= coeff;
 
-        // E = √(|Ex|² + |Ey|²)  – RMS magnitude
+        // E = √(|Ex|² + |Ey|²)  – RMS magnitude (unchanged)
         double e = Math.Sqrt(ex.Magnitude * ex.Magnitude + ey.Magnitude * ey.Magnitude);
-        return (ex, ey, e);
+
+        // Semi-axes of the ellipse traced by the electric-field vector during one period
+        var (ea, eb) = FieldEllipseCalculator.CalculateAxes(ex, ey);
+
+        return (ex, ey, e, ea, eb);
     }
 }
 
