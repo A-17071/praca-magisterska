@@ -260,13 +260,13 @@
                         <table class="table table-sm table-bordered" style="max-width:500px">
                             <tbody>
                                 <tr><th colspan="2" class="table-light">@T("Pole elektryczne w", "Electric field at") (@r.Point.X.ToString("F2") m, @r.Point.Y.ToString("F2") m)</th></tr>
-                                <tr><td>Ex [V/m]</td><td>@r.Ex.Magnitude.ToString("G4")</td></tr>
-                                <tr><td>Ey [V/m]</td><td>@r.Ey.Magnitude.ToString("G4")</td></tr>
-                                <tr><td><strong>E [V/m]</strong></td><td><strong>@r.E.ToString("G4")</strong></td></tr>
-                                <tr><td>Ea [V/m]</td><td>@r.Ea.ToString("G4")</td></tr>
-                                <tr><td>Eb [V/m]</td><td>@r.Eb.ToString("G4")</td></tr>
-                                <tr><td>@T("E z półosi [V/m]", "E from axes [V/m]")</td><td>@r.EFromAxes.ToString("G4")</td></tr>
-                                <tr><td>|E - @T("E z półosi", "E from axes")| [V/m]</td><td>@r.EDifference.ToString("G4")</td></tr>
+                                <tr><td>Ex [kV/m]</td><td>@((r.Ex.Magnitude / 1000).ToString("G4"))</td></tr>
+                                <tr><td>Ey [kV/m]</td><td>@((r.Ey.Magnitude / 1000).ToString("G4"))</td></tr>
+                                <tr><td><strong>E [kV/m]</strong></td><td><strong>@((r.E / 1000).ToString("G4"))</strong></td></tr>
+                                <tr><td>Ea [kV/m]</td><td>@((r.Ea / 1000).ToString("G4"))</td></tr>
+                                <tr><td>Eb [kV/m]</td><td>@((r.Eb / 1000).ToString("G4"))</td></tr>
+                                <tr><td>@T("E z półosi [kV/m]", "E from axes [kV/m]")</td><td>@((r.EFromAxes / 1000).ToString("G4"))</td></tr>
+                                <tr><td>|E - @T("E z półosi", "E from axes")| [kV/m]</td><td>@((r.EDifference / 1000).ToString("G4"))</td></tr>
                                 <tr><th colspan="2" class="table-light">@T("Indukcja magnetyczna", "Magnetic flux density")</th></tr>
                                 <tr><td>Bx [µT]</td><td>@((r.Bx.Magnitude * 1e6).ToString("G4"))</td></tr>
                                 <tr><td>By [µT]</td><td>@((r.By.Magnitude * 1e6).ToString("G4"))</td></tr>
@@ -294,7 +294,7 @@
                                 <div class="stat-card" style="border-top-color:#1565C0">
                                     <div class="stat-label">@T("Szczytowe natężenie pola elektr.", "Peak Electric Field Strength")</div>
                                     <div class="stat-value" style="color:#1565C0">
-                                        @PeakE.ToString("G4") <span class="stat-unit">V/m</span>
+                                        @PeakE.ToString("G4") <span class="stat-unit">kV/m</span>
                                     </div>
                                     <div class="stat-sub">RMS</div>
                                 </div>
@@ -326,27 +326,47 @@
                                     <p class="chart-title" style="color:#1565C0">● @T("Pole elektryczne wzdłuż profilu", "Electric Field over Distance")</p>
                                     <RadzenChart Style="height:380px" AnimationDuration="700">
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="E"
-                                                          Title="E [V/m]" Smooth="true" Stroke="#1565C0" StrokeWidth="2">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                                          Title="E [kV/m]" Smooth="true" Stroke="#1565C0" StrokeWidth="2">
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.E.ToString("G4") kV/m
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Ea"
-                                                          Title="Ea [V/m]" Smooth="true" Stroke="#42A5F5" StrokeWidth="1.5" LineType="LineType.Dashed">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                                          Title="Ea [kV/m]" Smooth="true" Stroke="#42A5F5" StrokeWidth="1.5" LineType="LineType.Dashed">
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.Ea.ToString("G4") kV/m
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Eb"
-                                                          Title="Eb [V/m]" Smooth="true" Stroke="#90CAF9" StrokeWidth="1.5" LineType="LineType.Dashed">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                                          Title="Eb [kV/m]" Smooth="true" Stroke="#90CAF9" StrokeWidth="1.5" LineType="LineType.Dashed">
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.Eb.ToString("G4") kV/m
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="EFromAxes"
-                                                          Title="@T("E z półosi [V/m]", "E from axes [V/m]")" Smooth="true" Stroke="#0D47A1" StrokeWidth="1.5" LineType="LineType.Dotted">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                                          Title="@T("E z półosi [kV/m]", "E from axes [kV/m]")" Smooth="true" Stroke="#0D47A1" StrokeWidth="1.5" LineType="LineType.Dotted">
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.EFromAxes.ToString("G4") kV/m
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@EChartMax" FormatString="{0:G4}">
-                                            <RadzenAxisTitle Text="E [V/m]" />
+                                        <RadzenValueAxis Min="0" Max="@EChartMax" Step="@EChartStep" FormatString="{0:G6}">
+                                            <RadzenAxisTitle Text="E [kV/m]" />
                                             <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
                                     </RadzenChart>
@@ -356,19 +376,39 @@
                                     <RadzenChart Style="height:380px" AnimationDuration="700">
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="H"
                                                           Title="H [A/m]" Smooth="true" Stroke="#00838F" StrokeWidth="2">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.H.ToString("G4") A/m
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Ha"
                                                           Title="Ha [A/m]" Smooth="true" Stroke="#26C6DA" StrokeWidth="1.5" LineType="LineType.Dashed">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.Ha.ToString("G4") A/m
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Hb"
                                                           Title="Hb [A/m]" Smooth="true" Stroke="#80DEEA" StrokeWidth="1.5" LineType="LineType.Dashed">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.Hb.ToString("G4") A/m
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="HFromAxes"
                                                           Title="@T("H z półosi [A/m]", "H from axes [A/m]")" Smooth="true" Stroke="#004D40" StrokeWidth="1.5" LineType="LineType.Dotted">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.HFromAxes.ToString("G4") A/m
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
@@ -389,13 +429,13 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>x [m]</th>
-                                            <th>Ex [V/m]</th>
-                                            <th>Ey [V/m]</th>
-                                            <th>E [V/m]</th>
-                                            <th>Ea [V/m]</th>
-                                            <th>Eb [V/m]</th>
-                                            <th>@T("E z półosi [V/m]", "E from axes [V/m]")</th>
-                                            <th>|ΔE| [V/m]</th>
+                                            <th>Ex [kV/m]</th>
+                                            <th>Ey [kV/m]</th>
+                                            <th>E [kV/m]</th>
+                                            <th>Ea [kV/m]</th>
+                                            <th>Eb [kV/m]</th>
+                                            <th>@T("E z półosi [kV/m]", "E from axes [kV/m]")</th>
+                                            <th>|ΔE| [kV/m]</th>
                                             <th>Bx [µT]</th>
                                             <th>By [µT]</th>
                                             <th>B [µT]</th>
@@ -417,13 +457,13 @@
                                         {
                                             <tr>
                                                 <td>@r.Point.X.ToString("F1")</td>
-                                                <td>@r.Ex.Magnitude.ToString("G4")</td>
-                                                <td>@r.Ey.Magnitude.ToString("G4")</td>
-                                                <td>@r.E.ToString("G4")</td>
-                                                <td>@r.Ea.ToString("G4")</td>
-                                                <td>@r.Eb.ToString("G4")</td>
-                                                <td>@r.EFromAxes.ToString("G4")</td>
-                                                <td>@r.EDifference.ToString("G4")</td>
+                                                <td>@((r.Ex.Magnitude / 1000).ToString("G4"))</td>
+                                                <td>@((r.Ey.Magnitude / 1000).ToString("G4"))</td>
+                                                <td>@((r.E / 1000).ToString("G4"))</td>
+                                                <td>@((r.Ea / 1000).ToString("G4"))</td>
+                                                <td>@((r.Eb / 1000).ToString("G4"))</td>
+                                                <td>@((r.EFromAxes / 1000).ToString("G4"))</td>
+                                                <td>@((r.EDifference / 1000).ToString("G4"))</td>
                                                 <td>@((r.Bx.Magnitude * 1e6).ToString("G4"))</td>
                                                 <td>@((r.By.Magnitude * 1e6).ToString("G4"))</td>
                                                 <td>@((r.B * 1e6).ToString("G4"))</td>
@@ -485,15 +525,15 @@
                                 <tr><th colspan="2" class="table-light">
                                     @T("Punkt", "Point") (@d.Point.X.ToString("F2") m, @d.Point.Y.ToString("F2") m)
                                 </th></tr>
-                                <tr><td>E [V/m]</td><td>@d.EAverage.ToString("G4")</td></tr>
+                                <tr><td>E [kV/m]</td><td>@((d.EAverage / 1000).ToString("G4"))</td></tr>
                                 <tr><td>H [A/m]</td><td>@d.HAverage.ToString("G4")</td></tr>
                                 <tr><th colspan="2" class="table-light">@T("Dawka ekspozycji elektrycznej", "Electric exposure dose")</th></tr>
                                 <tr>
                                     <td>EDEPE = E<sup>@_exponentP</sup> · T</td>
                                     <td>@d.Edepe.ToString("G4") <span class="text-muted small">(V/m)<sup>@_exponentP</sup>·s</span></td>
                                 </tr>
-                                <tr><td>E<sub>eq</sub> = (EDEPE / T)<sup>1/p</sup> [V/m]</td><td>@d.EEquivalent.ToString("G4")</td></tr>
-                                <tr><td>E max / E min [V/m]</td><td>@d.EMax.ToString("G4") / @d.EMin.ToString("G4")</td></tr>
+                                <tr><td>E<sub>eq</sub> = (EDEPE / T)<sup>1/p</sup> [kV/m]</td><td>@((d.EEquivalent / 1000).ToString("G4"))</td></tr>
+                                <tr><td>E max / E min [kV/m]</td><td>@((d.EMax / 1000).ToString("G4")) / @((d.EMin / 1000).ToString("G4"))</td></tr>
                                 <tr><th colspan="2" class="table-light">@T("Dawka ekspozycji magnetycznej (H)", "Magnetic exposure dose (H)")</th></tr>
                                 <tr>
                                     <td>EDEPM<sub>H</sub> = H<sup>@_exponentP</sup> · T</td>
@@ -520,7 +560,12 @@
                                     <RadzenChart Style="height:340px">
                                         <RadzenLineSeries Data="@_edepePlotData" CategoryProperty="X" ValueProperty="Y"
                                                           Title="EDEPE" Smooth="true" Stroke="#6a1b9a" StrokeWidth="2">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.Y.ToString("G4") (V/m)^p·s
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
@@ -539,7 +584,12 @@
                                     <RadzenChart Style="height:340px">
                                         <RadzenLineSeries Data="@_medepmHPlotData" CategoryProperty="X" ValueProperty="Y"
                                                           Title="EDEPM_H" Smooth="true" Stroke="#bf360c" StrokeWidth="2">
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                            <ChildContent>
+                                                <RadzenMarkers MarkerType="MarkerType.None" />
+                                            </ChildContent>
+                                            <TooltipTemplate Context="data">
+                                                X: @data.X.ToString("F3") m<br />Y: @data.Y.ToString("G4") (A/m)^p·s
+                                            </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenCategoryAxis FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
@@ -560,11 +610,11 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>x [m]</th>
-                                            <th>E<sub>@T("śr", "avg")</sub> [V/m]</th>
+                                            <th>E<sub>@T("śr", "avg")</sub> [kV/m]</th>
                                             <th>H<sub>@T("śr", "avg")</sub> [A/m]</th>
                                             <th>EDEPE<br /><small class="text-muted">E<sup>p</sup>·T</small></th>
                                             <th>EDEPM<sub>H</sub><br /><small class="text-muted">H<sup>p</sup>·T</small></th>
-                                            <th>E<sub>eq</sub> [V/m]</th>
+                                            <th>E<sub>eq</sub> [kV/m]</th>
                                             <th>H<sub>eq</sub> [A/m]</th>
                                         </tr>
                                     </thead>
@@ -573,11 +623,11 @@
                                         {
                                             <tr>
                                                 <td>@d.Point.X.ToString("F1")</td>
-                                                <td>@d.EAverage.ToString("G4")</td>
+                                                <td>@((d.EAverage / 1000).ToString("G4"))</td>
                                                 <td>@d.HAverage.ToString("G4")</td>
                                                 <td>@d.Edepe.ToString("G4")</td>
                                                 <td>@d.EdepmH.ToString("G4")</td>
-                                                <td>@d.EEquivalent.ToString("G4")</td>
+                                                <td>@((d.EEquivalent / 1000).ToString("G4"))</td>
                                                 <td>@d.HEquivalent.ToString("G4")</td>
                                             </tr>
                                         }
@@ -623,7 +673,12 @@
                                       Stroke="#90A4AE"
                                       StrokeWidth="1.5"
                                       LineType="LineType.Dashed">
-                        <RadzenMarkers MarkerType="MarkerType.None" />
+                        <ChildContent>
+                            <RadzenMarkers MarkerType="MarkerType.None" />
+                        </ChildContent>
+                        <TooltipTemplate Context="data">
+                            X: @data.GX.ToString("F3") m<br />Y: @data.GY.ToString("F3") m
+                        </TooltipTemplate>
                     </RadzenLineSeries>
                     <RadzenCategoryAxis>
                         <RadzenAxisTitle Text="x [m]" />
@@ -810,13 +865,15 @@
         }
     }
     
-    private double PeakE => _fieldResults?.Max(r => r.E)       ?? 0;
+    private double PeakE => _fieldResults?.Max(r => r.E / 1000) ?? 0;
     private double PeakB => _fieldResults?.Max(r => r.B * 1e6) ?? 0;
     private double PeakH => _fieldResults?.Max(r => r.H)       ?? 0;
 
     // ── Granice osi Y wykresu: 10% zapas ponad szczyt, podstawa = 0 ──────────
     private double? EChartMax       => _fieldProfileData is null ? null
         : _fieldProfileData.Max(p => new[] { p.E, p.Ea, p.EFromAxes }.Max()) * 1.10;
+    private double? EChartStep      => EChartMax is null ? null
+        : Math.Round(EChartMax.Value / 10, 4, MidpointRounding.AwayFromZero);
     private double? HChartMax       => _fieldProfileData is null ? null
         : _fieldProfileData.Max(p => new[] { p.H, p.Ha, p.HFromAxes }.Max()) * 1.10;
     private double? EdepePlotMax    => _edepePlotData    is null ? null
@@ -869,7 +926,7 @@
                 _fieldProfileData = _fieldResults
                     .Select(r => new FieldProfilePlotPoint(
                         r.Point.X,
-                        r.E, r.Ea, r.Eb, r.EFromAxes,
+                        r.E / 1000, r.Ea / 1000, r.Eb / 1000, r.EFromAxes / 1000,
                         r.B * 1e6, r.BFromAxes * 1e6,
                         r.H, r.Ha, r.Hb, r.HFromAxes))
                     .ToList();
