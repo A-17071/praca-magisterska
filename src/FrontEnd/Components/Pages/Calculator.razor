@@ -58,12 +58,12 @@
                                 <th>r<sub>s</sub> [m]</th>
                                 <th>s [m]</th>
                                 <th title="@T("Obliczony zastępczy promień (tylko odczyt)", "Computed equivalent radius (read-only)")">r<sub>eq</sub> [m]</th>
-                                <th>U [V]</th>
-                                <th>φU [°]</th>
+                                                <th>U [kV]</th>
+                                <th>φ<sub>U</sub> [°]</th>
                                 <th>I [A]</th>
-                                <th>φI [°]</th>
+                                <th>φ<sub>I</sub> [°]</th>
                                 <th title="@T("Uwzględnij w polu elektrycznym", "Include in electric field")">E?</th>
-                                <th title="@T("Uwzględnij w polu magnetycznym", "Include in magnetic field")">B?</th>
+                                <th title="@T("Uwzględnij w polu magnetycznym", "Include in magnetic field")">H?</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -98,7 +98,7 @@
                                                value="@c.EquivalentRadius.ToString("G4")"
                                                readonly="readonly" />
                                     </td>
-                                    <td><input class="form-control form-control-sm" style="width:95px" @bind="c.VoltageRms" /></td>
+                                    <td><input class="form-control form-control-sm" style="width:95px" @bind="c.VoltageRmsKv" /></td>
                                     <td><input class="form-control form-control-sm" style="width:70px" @bind="c.VoltageAngle" /></td>
                                     <td><input class="form-control form-control-sm" style="width:95px" @bind="c.CurrentRms" /></td>
                                     <td><input class="form-control form-control-sm" style="width:70px" @bind="c.CurrentAngle" /></td>
@@ -210,7 +210,94 @@
                     disabled="@(_fieldResults is null)">
                 @T("Oblicz ekspozycję", "Calculate Exposure")
             </button>
+            <button class="btn btn-outline-success btn-action" @onclick="SaveToComparison"
+                    disabled="@(_fieldResults is null || _mode != ObsMode.Profile)">
+                📌 @T("Zapisz do porównania", "Save to Comparison")
+            </button>
         </div>
+
+        @if (_savedScenarios.Count > 0)
+        {
+            <div class="section-card mb-3">
+                <div class="section-header">
+                    <span class="section-num">★</span>
+                    <h5 class="mb-0">@T("Porównanie scenariuszy", "Scenario Comparison")</h5>
+                    <button class="btn btn-sm btn-outline-danger ms-auto" @onclick="ClearAllScenarios">
+                        🗑 @T("Wyczyść wszystkie", "Clear All")
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            @for (int i = 0; i < _savedScenarios.Count; i++)
+                            {
+                                var idx = i;
+                                var s = _savedScenarios[idx];
+                                <span class="badge rounded-pill d-flex align-items-center gap-1 px-2 py-1" style="background:@s.Color; font-size:0.8rem;">
+                                    @s.Name
+                                    <button class="btn btn-sm p-0 text-white border-0" style="font-size:0.7rem; line-height:1;" @onclick="() => RemoveScenario(idx)">✕</button>
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-xl-6">
+                            <p class="chart-title" style="color:#1565C0">● @T("Porównanie Ea [kV/m]", "Ea Comparison [kV/m]")</p>
+                            <RadzenChart Style="height:380px" AnimationDuration="700">
+                                <RadzenChartTooltipOptions Shared="true" />
+                                @foreach (var scenario in _savedScenarios)
+                                {
+                                    <RadzenLineSeries Data="@scenario.ProfileData" CategoryProperty="X" ValueProperty="Ea"
+                                                      Title="@($"{scenario.Name} Ea")" Smooth="true" Stroke="@scenario.Color" StrokeWidth="2">
+                                        <ChildContent>
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </ChildContent>
+                                        <TooltipTemplate Context="data">
+                                            @scenario.Name — X: @data.X.ToString("F3") m<br />Ea: @data.Ea.ToString("G4") kV/m
+                                        </TooltipTemplate>
+                                    </RadzenLineSeries>
+                                }
+                                <RadzenCategoryAxis FormatString="{0:F0}">
+                                    <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
+                                    <RadzenAxisTitle Text="@T("Odległość [m]", "Distance [m]")" />
+                                </RadzenCategoryAxis>
+                                <RadzenValueAxis Min="0" Max="@EaComparisonChartMax" Step="0.1" FormatString="{0:F1}">
+                                    <RadzenAxisTitle Text="Ea [kV/m]" />
+                                    <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
+                                </RadzenValueAxis>
+                            </RadzenChart>
+                        </div>
+                        <div class="col-12 col-xl-6">
+                            <p class="chart-title" style="color:#00838F">● @T("Porównanie Ha [A/m]", "Ha Comparison [A/m]")</p>
+                            <RadzenChart Style="height:380px" AnimationDuration="700">
+                                <RadzenChartTooltipOptions Shared="true" />
+                                @foreach (var scenario in _savedScenarios)
+                                {
+                                    <RadzenLineSeries Data="@scenario.ProfileData" CategoryProperty="X" ValueProperty="Ha"
+                                                      Title="@($"{scenario.Name} Ha")" Smooth="true" Stroke="@scenario.Color" StrokeWidth="2">
+                                        <ChildContent>
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </ChildContent>
+                                        <TooltipTemplate Context="data">
+                                            <div>@scenario.Name — X: @data.X.ToString("F3") m<br />Ha: @data.Ha.ToString("G4") A/m</div>
+                                        </TooltipTemplate>
+                                    </RadzenLineSeries>
+                                }
+                                <RadzenCategoryAxis FormatString="{0:F0}">
+                                    <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
+                                    <RadzenAxisTitle Text="@T("Odległość [m]", "Distance [m]")" />
+                                </RadzenCategoryAxis>
+                                <RadzenValueAxis Min="0" Max="@HaComparisonChartMax" Step="1" FormatString="{0:F1}">
+                                    <RadzenAxisTitle Text="Ha [A/m]" />
+                                    <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
+                                </RadzenValueAxis>
+                            </RadzenChart>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
 
     </div><!-- /calc-main -->
 
@@ -323,15 +410,16 @@
                         {
                             <div class="row g-3">
                                 <div class="col-12 col-xl-6">
-                                    <p class="chart-title" style="color:#1565C0">● @T("Pole elektryczne wzdłuż profilu", "Electric Field over Distance")</p>
+                                    <p class="chart-title" style="color:#1565C0">● @T("Pole elektryczne w poprzek profilu", "Electric Field over Distance")</p>
                                     <RadzenChart Style="height:380px" AnimationDuration="700">
+                                        <RadzenChartTooltipOptions Shared="true" />
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="E"
                                                           Title="E [kV/m]" Smooth="true" Stroke="#1565C0" StrokeWidth="2">
                                             <ChildContent>
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.E.ToString("G4") kV/m
+                                                <div>X: @data.X.ToString("F3") m<br />E: @data.E.ToString("G4") kV/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Ea"
@@ -340,7 +428,7 @@
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.Ea.ToString("G4") kV/m
+                                                <div>X: @data.X.ToString("F3") m<br />Ea: @data.Ea.ToString("G4") kV/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Eb"
@@ -349,7 +437,7 @@
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.Eb.ToString("G4") kV/m
+                                                <div>X: @data.X.ToString("F3") m<br />Eb: @data.Eb.ToString("G4") kV/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="EFromAxes"
@@ -358,29 +446,30 @@
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.EFromAxes.ToString("G4") kV/m
+                                                <div>X: @data.X.ToString("F3") m<br />E axes: @data.EFromAxes.ToString("G4") kV/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
-                                        <RadzenCategoryAxis FormatString="{0:F0}">
+                                        <RadzenCategoryAxis Min="@_profXMin" Max="@_profXMax" FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@EChartMax" Step="@EChartStep" FormatString="{0:G6}">
+                                        <RadzenValueAxis Min="0" Max="@EChartMax" Step="0.1" FormatString="{0:F1}">
                                             <RadzenAxisTitle Text="E [kV/m]" />
                                             <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
                                     </RadzenChart>
                                 </div>
                                 <div class="col-12 col-xl-6">
-                                    <p class="chart-title" style="color:#00838F">● @T("Natężenie pola magnetycznego wzdłuż profilu", "Magnetic Field Strength over Distance")</p>
+                                    <p class="chart-title" style="color:#00838F">● @T("Natężenie pola magnetycznego w poprzek profilu", "Magnetic Field Strength over Distance")</p>
                                     <RadzenChart Style="height:380px" AnimationDuration="700">
+                                        <RadzenChartTooltipOptions Shared="true" />
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="H"
                                                           Title="H [A/m]" Smooth="true" Stroke="#00838F" StrokeWidth="2">
                                             <ChildContent>
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.H.ToString("G4") A/m
+                                                <div>X: @data.X.ToString("F3") m<br />H: @data.H.ToString("G4") A/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Ha"
@@ -389,7 +478,7 @@
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.Ha.ToString("G4") A/m
+                                                <div>X: @data.X.ToString("F3") m<br />Ha: @data.Ha.ToString("G4") A/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="Hb"
@@ -398,7 +487,7 @@
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.Hb.ToString("G4") A/m
+                                                <div>X: @data.X.ToString("F3") m<br />Hb: @data.Hb.ToString("G4") A/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
                                         <RadzenLineSeries Data="@_fieldProfileData" CategoryProperty="X" ValueProperty="HFromAxes"
@@ -407,14 +496,14 @@
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.HFromAxes.ToString("G4") A/m
+                                                <div>X: @data.X.ToString("F3") m<br />H axes: @data.HFromAxes.ToString("G4") A/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
-                                        <RadzenCategoryAxis FormatString="{0:F0}">
+                                        <RadzenCategoryAxis Min="@_profXMin" Max="@_profXMax" FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@HChartMax" FormatString="{0:G4}">
+                                        <RadzenValueAxis Min="0" Max="@HChartMax" Step="1" FormatString="{0:F1}">
                                             <RadzenAxisTitle Text="H [A/m]" />
                                             <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
@@ -558,16 +647,17 @@
                                         ● EDEPE @T("wzdłuż profilu", "over Distance") (p=@_exponentP, T=@_exposureTimeHours h)
                                     </p>
                                     <RadzenChart Style="height:340px">
+                                        <RadzenChartTooltipOptions Shared="true" />
                                         <RadzenLineSeries Data="@_edepePlotData" CategoryProperty="X" ValueProperty="Y"
                                                           Title="EDEPE" Smooth="true" Stroke="#6a1b9a" StrokeWidth="2">
                                             <ChildContent>
                                                 <RadzenMarkers MarkerType="MarkerType.None" />
                                             </ChildContent>
                                             <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.Y.ToString("G4") (V/m)^p·s
+                                                <div>X: @data.X.ToString("F3") m<br />EDEPE: @data.Y.ToString("G4") (V/m)^p·s</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
-                                        <RadzenCategoryAxis FormatString="{0:F0}">
+                                        <RadzenCategoryAxis Min="@_profXMin" Max="@_profXMax" FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
@@ -582,6 +672,7 @@
                                         ● EDEPM<sub>H</sub> @T("wzdłuż profilu", "over Distance") (p=@_exponentP, T=@_exposureTimeHours h)
                                     </p>
                                     <RadzenChart Style="height:340px">
+                                        <RadzenChartTooltipOptions Shared="true" />
                                         <RadzenLineSeries Data="@_medepmHPlotData" CategoryProperty="X" ValueProperty="Y"
                                                           Title="EDEPM_H" Smooth="true" Stroke="#bf360c" StrokeWidth="2">
                                             <ChildContent>
@@ -591,7 +682,7 @@
                                                 X: @data.X.ToString("F3") m<br />Y: @data.Y.ToString("G4") (A/m)^p·s
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
-                                        <RadzenCategoryAxis FormatString="{0:F0}">
+                                        <RadzenCategoryAxis Min="@_profXMin" Max="@_profXMax" FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
@@ -652,6 +743,7 @@
             </div>
             <div class="section-body p-2">
                 <RadzenChart Style="height:300px">
+                    <RadzenChartTooltipOptions Shared="true" />
                     @for (int i = 0; i < _conductors.Count; i++)
                     {
                         var idx      = i;
@@ -677,7 +769,7 @@
                             <RadzenMarkers MarkerType="MarkerType.None" />
                         </ChildContent>
                         <TooltipTemplate Context="data">
-                            X: @data.GX.ToString("F3") m<br />Y: @data.GY.ToString("F3") m
+                            <div>X: @data.GX.ToString("F3") m<br />Y: @data.GY.ToString("F3") m</div>
                         </TooltipTemplate>
                     </RadzenLineSeries>
                     <RadzenCategoryAxis>
@@ -776,6 +868,13 @@
         public bool       IncludeE     { get; set; } = true;
         public bool       IncludeB     { get; set; } = true;
 
+        /// <summary>Napięcie RMS w kV (konwertuje do/z V używanego wewnętrznie).</summary>
+        public double VoltageRmsKv
+        {
+            get => VoltageRms / 1000.0;
+            set => VoltageRms = value * 1000.0;
+        }
+
         /// <summary>Zastępczy promień wiązki r_eq obliczony z parametrów wiązki (tylko do odczytu).</summary>
         public double EquivalentRadius =>
             BundleCalculator.CalculateEquivalentRadius(Bundle, SubRadius,
@@ -872,14 +971,18 @@
     // ── Granice osi Y wykresu: 10% zapas ponad szczyt, podstawa = 0 ──────────
     private double? EChartMax       => _fieldProfileData is null ? null
         : _fieldProfileData.Max(p => new[] { p.E, p.Ea, p.EFromAxes }.Max()) * 1.10;
-    private double? EChartStep      => EChartMax is null ? null
-        : Math.Round(EChartMax.Value / 10, 4, MidpointRounding.AwayFromZero);
     private double? HChartMax       => _fieldProfileData is null ? null
         : _fieldProfileData.Max(p => new[] { p.H, p.Ha, p.HFromAxes }.Max()) * 1.10;
     private double? EdepePlotMax    => _edepePlotData    is null ? null
         : _edepePlotData.Max(p => p.Y)    * 1.10;
     private double? MedepmHPlotMax  => _medepmHPlotData  is null ? null
         : _medepmHPlotData.Max(p => p.Y)  * 1.10;
+
+    // ── Granice osi Y wykresów porównawczych ──────────────────────────────────
+    private double? EaComparisonChartMax => _savedScenarios.Count == 0 ? null
+        : _savedScenarios.SelectMany(s => s.ProfileData).Max(p => p.Ea) * 1.10;
+    private double? HaComparisonChartMax => _savedScenarios.Count == 0 ? null
+        : _savedScenarios.SelectMany(s => s.ProfileData).Max(p => p.Ha) * 1.10;
     
     protected override void OnInitialized() => LoadDefaultConductors();
     
@@ -1030,6 +1133,48 @@
     private List<FieldProfilePlotPoint>? _fieldProfileData;
     private List<PlotPoint>?             _edepePlotData;
     private List<PlotPoint>?             _medepmHPlotData;
+
+    // ── Porównanie scenariuszy ─────────────────────────────────────────────────
+    private class SavedScenario
+    {
+        public string Name { get; set; } = "";
+        public string Color { get; set; } = "#000";
+        public List<FieldProfilePlotPoint> ProfileData { get; set; } = new();
+    }
+
+    private List<SavedScenario> _savedScenarios = new();
+    private int _scenarioCounter;
+
+    private static readonly string[] ScenarioPalette =
+        { "#1565C0", "#E65100", "#2E7D32", "#6A1B9A", "#00838F", "#B71C1C", "#F9A825", "#4E342E", "#00695C", "#AD1457" };
+
+    private void SaveToComparison()
+    {
+        if (_fieldProfileData is null || _mode != ObsMode.Profile) return;
+
+        _scenarioCounter++;
+        var color = ScenarioPalette[(_savedScenarios.Count) % ScenarioPalette.Length];
+        var name = $"#{_scenarioCounter} (y={_profY}m)";
+
+        _savedScenarios.Add(new SavedScenario
+        {
+            Name = name,
+            Color = color,
+            ProfileData = _fieldProfileData.ToList()
+        });
+    }
+
+    private void RemoveScenario(int index)
+    {
+        if (index >= 0 && index < _savedScenarios.Count)
+            _savedScenarios.RemoveAt(index);
+    }
+
+    private void ClearAllScenarios()
+    {
+        _savedScenarios.Clear();
+        _scenarioCounter = 0;
+    }
     
     private async Task ExportFieldResultsCsv()
     {
