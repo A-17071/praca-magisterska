@@ -216,88 +216,6 @@
             </button>
         </div>
 
-        @if (_savedScenarios.Count > 0)
-        {
-            <div class="section-card mb-3">
-                <div class="section-header">
-                    <span class="section-num">★</span>
-                    <h5 class="mb-0">@T("Porównanie scenariuszy", "Scenario Comparison")</h5>
-                    <button class="btn btn-sm btn-outline-danger ms-auto" @onclick="ClearAllScenarios">
-                        🗑 @T("Wyczyść wszystkie", "Clear All")
-                    </button>
-                </div>
-                <div class="section-body">
-                    <div class="mb-3">
-                        <div class="d-flex flex-wrap gap-2 align-items-center">
-                            @for (int i = 0; i < _savedScenarios.Count; i++)
-                            {
-                                var idx = i;
-                                var s = _savedScenarios[idx];
-                                <span class="badge rounded-pill d-flex align-items-center gap-1 px-2 py-1" style="background:@s.Color; font-size:0.8rem;">
-                                    @s.Name
-                                    <button class="btn btn-sm p-0 text-white border-0" style="font-size:0.7rem; line-height:1;" @onclick="() => RemoveScenario(idx)">✕</button>
-                                </span>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-12 col-xl-6">
-                            <p class="chart-title" style="color:#1565C0">● @T("Porównanie Ea [kV/m]", "Ea Comparison [kV/m]")</p>
-                            <RadzenChart Style="height:380px" AnimationDuration="700">
-                                <RadzenChartTooltipOptions Shared="true" />
-                                @foreach (var scenario in _savedScenarios)
-                                {
-                                    <RadzenLineSeries Data="@scenario.ProfileData" CategoryProperty="X" ValueProperty="Ea"
-                                                      Title="@($"{scenario.Name} Ea")" Smooth="true" Stroke="@scenario.Color" StrokeWidth="2">
-                                        <ChildContent>
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
-                                        </ChildContent>
-                                        <TooltipTemplate Context="data">
-                                            @scenario.Name — X: @data.X.ToString("F3") m<br />Ea: @data.Ea.ToString("G4") kV/m
-                                        </TooltipTemplate>
-                                    </RadzenLineSeries>
-                                }
-                                <RadzenCategoryAxis FormatString="{0:F0}">
-                                    <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
-                                    <RadzenAxisTitle Text="@T("Odległość [m]", "Distance [m]")" />
-                                </RadzenCategoryAxis>
-                                <RadzenValueAxis Min="0" Max="@EaComparisonChartMax" Step="0.1" FormatString="{0:F1}">
-                                    <RadzenAxisTitle Text="Ea [kV/m]" />
-                                    <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
-                                </RadzenValueAxis>
-                            </RadzenChart>
-                        </div>
-                        <div class="col-12 col-xl-6">
-                            <p class="chart-title" style="color:#00838F">● @T("Porównanie Ha [A/m]", "Ha Comparison [A/m]")</p>
-                            <RadzenChart Style="height:380px" AnimationDuration="700">
-                                <RadzenChartTooltipOptions Shared="true" />
-                                @foreach (var scenario in _savedScenarios)
-                                {
-                                    <RadzenLineSeries Data="@scenario.ProfileData" CategoryProperty="X" ValueProperty="Ha"
-                                                      Title="@($"{scenario.Name} Ha")" Smooth="true" Stroke="@scenario.Color" StrokeWidth="2">
-                                        <ChildContent>
-                                            <RadzenMarkers MarkerType="MarkerType.None" />
-                                        </ChildContent>
-                                        <TooltipTemplate Context="data">
-                                            <div>@scenario.Name — X: @data.X.ToString("F3") m<br />Ha: @data.Ha.ToString("G4") A/m</div>
-                                        </TooltipTemplate>
-                                    </RadzenLineSeries>
-                                }
-                                <RadzenCategoryAxis FormatString="{0:F0}">
-                                    <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
-                                    <RadzenAxisTitle Text="@T("Odległość [m]", "Distance [m]")" />
-                                </RadzenCategoryAxis>
-                                <RadzenValueAxis Min="0" Max="@HaComparisonChartMax" Step="1" FormatString="{0:F1}">
-                                    <RadzenAxisTitle Text="Ha [A/m]" />
-                                    <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
-                                </RadzenValueAxis>
-                            </RadzenChart>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
 
     </div><!-- /calc-main -->
 
@@ -379,27 +297,27 @@
                         <div class="row g-2 mb-4">
                             <div class="col-12 col-sm-4">
                                 <div class="stat-card" style="border-top-color:#1565C0">
-                                    <div class="stat-label">@T("Szczytowe natężenie pola elektr.", "Peak Electric Field Strength")</div>
+                                    <div class="stat-label">@T("Szczytowe Ea (półoś elipsy E)", "Peak Ea (E ellipse semi-axis)")</div>
                                     <div class="stat-value" style="color:#1565C0">
-                                        @PeakE.ToString("G4") <span class="stat-unit">kV/m</span>
+                                        @PeakEa.ToString("G4", _plCulture) <span class="stat-unit">kV/m</span>
                                     </div>
                                     <div class="stat-sub">RMS</div>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-4">
                                 <div class="stat-card" style="border-top-color:#00838F">
-                                    <div class="stat-label">@T("Szczytowa indukcja magnetyczna", "Peak Magnetic Flux")</div>
+                                    <div class="stat-label">@T("Szczytowe Ha (półoś elipsy H)", "Peak Ha (H ellipse semi-axis)")</div>
                                     <div class="stat-value" style="color:#00838F">
-                                        @PeakB.ToString("G4") <span class="stat-unit">µT</span>
+                                        @PeakHa.ToString("G4", _plCulture) <span class="stat-unit">A/m</span>
                                     </div>
                                     <div class="stat-sub">RMS</div>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-4">
                                 <div class="stat-card" style="border-top-color:#E65100">
-                                    <div class="stat-label">@T("Szczytowe natężenie pola mag.", "Peak Mag. Field Strength")</div>
+                                    <div class="stat-label">@T("Szczytowa indukcja magnetyczna", "Peak Magnetic Flux Density")</div>
                                     <div class="stat-value" style="color:#E65100">
-                                        @PeakH.ToString("G4") <span class="stat-unit">A/m</span>
+                                        @PeakB.ToString("G4", _plCulture) <span class="stat-unit">µT</span>
                                     </div>
                                     <div class="stat-sub">RMS</div>
                                 </div>
@@ -453,7 +371,7 @@
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@EChartMax" Step="0.1" FormatString="{0:F1}">
+                                        <RadzenValueAxis Min="0" Max="@EChartMax" Step="@EChartStep" Formatter="@FormatAxisValue">
                                             <RadzenAxisTitle Text="E [kV/m]" />
                                             <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
@@ -503,7 +421,7 @@
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@HChartMax" Step="1" FormatString="{0:F1}">
+                                        <RadzenValueAxis Min="0" Max="@HChartMax" Step="@HChartStep" Formatter="@FormatAxisValue">
                                             <RadzenAxisTitle Text="H [A/m]" />
                                             <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
@@ -661,7 +579,7 @@
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@EdepePlotMax" FormatString="{0:G4}">
+                                        <RadzenValueAxis Min="0" Max="@EdepePlotMax" Step="@EdepePlotStep" Formatter="@FormatAxisValue">
                                             <RadzenAxisTitle Text="(V/m)^p·s" />
                                             <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
@@ -686,7 +604,7 @@
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@MedepmHPlotMax" FormatString="{0:G4}">
+                                        <RadzenValueAxis Min="0" Max="@MedepmHPlotMax" Step="@MedepmHPlotStep" Formatter="@FormatAxisValue">
                                             <RadzenAxisTitle Text="(A/m)^p·s" />
                                             <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
                                         </RadzenValueAxis>
@@ -732,6 +650,80 @@
         }
 
     </div><!-- /results-col -->
+
+    @if (_savedScenarios.Count > 0)
+    {
+        <div class="col-12 order-4 pt-3">
+            <div class="section-card mb-3">
+                <div class="section-header">
+                    <span class="section-num">★</span>
+                    <h5 class="mb-0">@T("Porównanie scenariuszy", "Scenario Comparison")</h5>
+                    <button class="btn btn-sm btn-outline-danger ms-auto" @onclick="ClearAllScenarios">
+                        🗑 @T("Wyczyść wszystkie", "Clear All")
+                    </button>
+                </div>
+                <div class="section-body">
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            @for (int i = 0; i < _savedScenarios.Count; i++)
+                            {
+                                var idx = i;
+                                var s = _savedScenarios[idx];
+                                <span class="badge rounded-pill d-flex align-items-center gap-1 px-2 py-1" style="background:@s.Color; font-size:0.8rem;">
+                                    @s.Name
+                                    <button class="btn btn-sm p-0 text-white border-0" style="font-size:0.7rem; line-height:1;" @onclick="() => RemoveScenario(idx)">✕</button>
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-xl-6">
+                            <p class="chart-title" style="color:#1565C0">● @T("Porównanie Ea [kV/m]", "Ea Comparison [kV/m]")</p>
+                            <RadzenChart Style="height:420px" AnimationDuration="700">
+                                <RadzenChartTooltipOptions Shared="true" />
+                                @foreach (var scenario in _savedScenarios)
+                                {
+                                    <RadzenLineSeries Data="@scenario.ProfileData" CategoryProperty="X" ValueProperty="Ea"
+                                                      Title="@($"{scenario.Name} Ea")" Smooth="true" Stroke="@scenario.Color" StrokeWidth="2">
+                                        <RadzenMarkers MarkerType="MarkerType.None" />
+                                    </RadzenLineSeries>
+                                }
+                                <RadzenCategoryAxis Min="@ComparisonXMin" Max="@ComparisonXMax" FormatString="{0:F0}">
+                                    <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
+                                    <RadzenAxisTitle Text="@T("Odległość [m]", "Distance [m]")" />
+                                </RadzenCategoryAxis>
+                                <RadzenValueAxis Min="0" Max="@EaComparisonChartMax" Step="@EaComparisonStep" Formatter="@FormatAxisValue">
+                                    <RadzenAxisTitle Text="Ea [kV/m]" />
+                                    <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
+                                </RadzenValueAxis>
+                            </RadzenChart>
+                        </div>
+                        <div class="col-12 col-xl-6">
+                            <p class="chart-title" style="color:#00838F">● @T("Porównanie Ha [A/m]", "Ha Comparison [A/m]")</p>
+                            <RadzenChart Style="height:420px" AnimationDuration="700">
+                                <RadzenChartTooltipOptions Shared="true" />
+                                @foreach (var scenario in _savedScenarios)
+                                {
+                                    <RadzenLineSeries Data="@scenario.ProfileData" CategoryProperty="X" ValueProperty="Ha"
+                                                      Title="@($"{scenario.Name} Ha")" Smooth="true" Stroke="@scenario.Color" StrokeWidth="2">
+                                        <RadzenMarkers MarkerType="MarkerType.None" />
+                                    </RadzenLineSeries>
+                                }
+                                <RadzenCategoryAxis Min="@ComparisonXMin" Max="@ComparisonXMax" FormatString="{0:F0}">
+                                    <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
+                                    <RadzenAxisTitle Text="@T("Odległość [m]", "Distance [m]")" />
+                                </RadzenCategoryAxis>
+                                <RadzenValueAxis Min="0" Max="@HaComparisonChartMax" Step="@HaComparisonStep" Formatter="@FormatAxisValue">
+                                    <RadzenAxisTitle Text="Ha [A/m]" />
+                                    <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
+                                </RadzenValueAxis>
+                            </RadzenChart>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     <div class="col-12 col-xl-4 order-2 calc-sidebar">
 
@@ -921,6 +913,13 @@
     private static string GetConductorColor(int index)
         => ConductorPalette[index % ConductorPalette.Length];
 
+    // Formatuje wartości osi używając przecinka jako separatora dziesiętnego (pl-PL)
+    private static readonly System.Globalization.CultureInfo _plCulture =
+        System.Globalization.CultureInfo.GetCultureInfo("pl-PL");
+
+    private static string FormatAxisValue(object value)
+        => value is double d ? d.ToString("G4", _plCulture) : value?.ToString() ?? "";
+
     private string? FieldConsistencyWarningMessage
     {
         get
@@ -964,9 +963,11 @@
         }
     }
     
-    private double PeakE => _fieldResults?.Max(r => r.E / 1000) ?? 0;
-    private double PeakB => _fieldResults?.Max(r => r.B * 1e6) ?? 0;
-    private double PeakH => _fieldResults?.Max(r => r.H)       ?? 0;
+    private double PeakE  => _fieldResults?.Max(r => r.E / 1000) ?? 0;
+    private double PeakEa => _fieldResults?.Max(r => r.Ea / 1000) ?? 0;
+    private double PeakB  => _fieldResults?.Max(r => r.B * 1e6) ?? 0;
+    private double PeakH  => _fieldResults?.Max(r => r.H) ?? 0;
+    private double PeakHa => _fieldResults?.Max(r => r.Ha) ?? 0;
 
     // ── Granice osi Y wykresu: 10% zapas ponad szczyt, podstawa = 0 ──────────
     private double? EChartMax       => _fieldProfileData is null ? null
@@ -978,11 +979,33 @@
     private double? MedepmHPlotMax  => _medepmHPlotData  is null ? null
         : _medepmHPlotData.Max(p => p.Y)  * 1.10;
 
-    // ── Granice osi Y wykresów porównawczych ──────────────────────────────────
+    // ── Dynamiczne kroki osi Y (≈5 czytelnych podziałek niezależnie od skali) ─
+    private static double NiceStep(double? max, int targetTicks = 5)
+    {
+        if (max is null or 0) return 1;
+        double rawStep  = max.Value / targetTicks;
+        double magnitude = Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
+        double norm      = rawStep / magnitude;
+        double nice      = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+        return nice * magnitude;
+    }
+
+    private double EChartStep       => NiceStep(EChartMax);
+    private double HChartStep       => NiceStep(HChartMax);
+    private double EdepePlotStep    => NiceStep(EdepePlotMax);
+    private double MedepmHPlotStep  => NiceStep(MedepmHPlotMax);
+    private double EaComparisonStep => NiceStep(EaComparisonChartMax);
+    private double HaComparisonStep => NiceStep(HaComparisonChartMax);
+
+    // ── Granice osi X / Y porównania ─────────────────────────────────────────
     private double? EaComparisonChartMax => _savedScenarios.Count == 0 ? null
         : _savedScenarios.SelectMany(s => s.ProfileData).Max(p => p.Ea) * 1.10;
     private double? HaComparisonChartMax => _savedScenarios.Count == 0 ? null
         : _savedScenarios.SelectMany(s => s.ProfileData).Max(p => p.Ha) * 1.10;
+    private double ComparisonXMin => _savedScenarios.Count == 0 ? _profXMin
+        : _savedScenarios.SelectMany(s => s.ProfileData).Min(p => p.X);
+    private double ComparisonXMax => _savedScenarios.Count == 0 ? _profXMax
+        : _savedScenarios.SelectMany(s => s.ProfileData).Max(p => p.X);
     
     protected override void OnInitialized() => LoadDefaultConductors();
     
