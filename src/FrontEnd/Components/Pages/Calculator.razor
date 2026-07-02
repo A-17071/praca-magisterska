@@ -95,7 +95,7 @@
                                     </td>
                                     <td>
                                         <input class="form-control form-control-sm bg-light text-muted" style="width:80px"
-                                               value="@c.EquivalentRadius.ToString("G4")"
+                                               value="@(double.IsNaN(c.EquivalentRadius) ? "—" : c.EquivalentRadius.ToString("G4"))"
                                                readonly="readonly" />
                                     </td>
                                     <td><input class="form-control form-control-sm" style="width:95px" @bind="c.VoltageRmsKv" /></td>
@@ -367,7 +367,7 @@
                                                 <div>X: @data.X.ToString("F3") m<br />E axes: @data.EFromAxes.ToString("G4") kV/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
-                                        <RadzenCategoryAxis Min="@_profXMin" Max="@_profXMax" FormatString="{0:F0}">
+                                        <RadzenCategoryAxis Min="@XAxisMin" Max="@XAxisMax" Step="@XAxisStep" FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
@@ -417,7 +417,7 @@
                                                 <div>X: @data.X.ToString("F3") m<br />H axes: @data.HFromAxes.ToString("G4") A/m</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
-                                        <RadzenCategoryAxis Min="@_profXMin" Max="@_profXMax" FormatString="{0:F0}">
+                                        <RadzenCategoryAxis Min="@XAxisMin" Max="@XAxisMax" Step="@XAxisStep" FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
@@ -575,7 +575,7 @@
                                                 <div>X: @data.X.ToString("F3") m<br />EDEPE: @data.Y.ToString("G4") (V/m)^p·s</div>
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
-                                        <RadzenCategoryAxis Min="@_profXMin" Max="@_profXMax" FormatString="{0:F0}">
+                                        <RadzenCategoryAxis Min="@XAxisMin" Max="@XAxisMax" Step="@XAxisStep" FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
@@ -600,7 +600,7 @@
                                                 X: @data.X.ToString("F3") m<br />Y: @data.Y.ToString("G4") (A/m)^p·s
                                             </TooltipTemplate>
                                         </RadzenLineSeries>
-                                        <RadzenCategoryAxis Min="@_profXMin" Max="@_profXMax" FormatString="{0:F0}">
+                                        <RadzenCategoryAxis Min="@XAxisMin" Max="@XAxisMax" Step="@XAxisStep" FormatString="{0:F0}">
                                             <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                             <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
                                         </RadzenCategoryAxis>
@@ -688,7 +688,7 @@
                                         <RadzenMarkers MarkerType="MarkerType.None" />
                                     </RadzenLineSeries>
                                 }
-                                <RadzenCategoryAxis Min="@ComparisonXMin" Max="@ComparisonXMax" FormatString="{0:F0}">
+                                <RadzenCategoryAxis Min="@ComparisonXAxisMin" Max="@ComparisonXAxisMax" Step="@ComparisonXStep" FormatString="{0:F0}">
                                     <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                     <RadzenAxisTitle Text="@T("Odległość [m]", "Distance [m]")" />
                                 </RadzenCategoryAxis>
@@ -709,7 +709,7 @@
                                         <RadzenMarkers MarkerType="MarkerType.None" />
                                     </RadzenLineSeries>
                                 }
-                                <RadzenCategoryAxis Min="@ComparisonXMin" Max="@ComparisonXMax" FormatString="{0:F0}">
+                                <RadzenCategoryAxis Min="@ComparisonXAxisMin" Max="@ComparisonXAxisMax" Step="@ComparisonXStep" FormatString="{0:F0}">
                                     <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
                                     <RadzenAxisTitle Text="@T("Odległość [m]", "Distance [m]")" />
                                 </RadzenCategoryAxis>
@@ -868,9 +868,21 @@
         }
 
         /// <summary>Zastępczy promień wiązki r_eq obliczony z parametrów wiązki (tylko do odczytu).</summary>
-        public double EquivalentRadius =>
-            BundleCalculator.CalculateEquivalentRadius(Bundle, SubRadius,
-                Bundle == BundleType.Single ? 0 : Spacing);
+        public double EquivalentRadius
+        {
+            get
+            {
+                try
+                {
+                    return BundleCalculator.CalculateEquivalentRadius(Bundle, SubRadius,
+                        Bundle == BundleType.Single ? 0 : Spacing);
+                }
+                catch
+                {
+                    return double.NaN;
+                }
+            }
+        }
     }
 
     private enum ObsMode    { SinglePoint, Profile }
@@ -1006,6 +1018,43 @@
         : _savedScenarios.SelectMany(s => s.ProfileData).Min(p => p.X);
     private double ComparisonXMax => _savedScenarios.Count == 0 ? _profXMax
         : _savedScenarios.SelectMany(s => s.ProfileData).Max(p => p.X);
+
+    // ── Oś X: krok zaokrąglony, granice wyrównane do wielokrotności kroku ─────
+    // Gwarantuje, że 0 oraz wartości graniczne profilu zawsze pojawiają się jako etykiety.
+    private static bool IsDivisible(double value, double divisor)
+    {
+        double ratio = value / divisor;
+        return Math.Abs(ratio - Math.Round(ratio)) < 1e-9;
+    }
+
+    private static double NiceXStep(double xMin, double xMax, int targetTicks = 8)
+    {
+        double range = Math.Abs(xMax - xMin);
+        if (range <= 0) return 1;
+        double rawStep   = range / targetTicks;
+        double magnitude = Math.Pow(10, Math.Floor(Math.Log10(rawStep)));
+        double norm      = rawStep / magnitude;
+        double nice      = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+        double step      = nice * magnitude;
+
+        // When 0 is inside the range, try to pick a step that divides xMin exactly
+        // so that 0 naturally appears as a tick mark.
+        if (xMin < 0 && xMax > 0 && !IsDivisible(xMin, step))
+        {
+            double half = step / 2;
+            if (IsDivisible(xMin, half))
+                return half;
+        }
+        return step;
+    }
+
+    private double XAxisStep => NiceXStep(_profXMin, _profXMax);
+    private double XAxisMin  => _profXMin;
+    private double XAxisMax  => _profXMax;
+
+    private double ComparisonXStep    => NiceXStep(ComparisonXMin, ComparisonXMax);
+    private double ComparisonXAxisMin => ComparisonXMin;
+    private double ComparisonXAxisMax => ComparisonXMax;
     
     protected override void OnInitialized() => LoadDefaultConductors();
     

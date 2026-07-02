@@ -6,6 +6,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">osx-arm64</RuntimeIdentifier>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\ModulKalkulacyjny\ModulKalkulacyjny.csproj" />
         <PackageReference Include="Radzen.Blazor" Version="*" />
