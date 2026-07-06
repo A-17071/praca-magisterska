@@ -170,6 +170,7 @@
             </div>
         </div>
 
+        @*
         <div class="section-card mb-3">
             <div class="section-header">
                 <span class="section-num">3</span>
@@ -201,15 +202,18 @@
                 </div>
             </div>
         </div>
+        *@
 
         <div class="d-grid d-sm-flex gap-2 mb-4">
             <button class="btn btn-primary btn-action" @onclick="CalculateField">
                 ⚡ @T("Oblicz pole", "Calculate Field")
             </button>
+            @*
             <button class="btn btn-outline-secondary btn-action" @onclick="CalculateExposure"
                     disabled="@(_fieldResults is null)">
                 @T("Oblicz ekspozycję", "Calculate Exposure")
             </button>
+            *@
             <button class="btn btn-outline-success btn-action" @onclick="SaveToComparison"
                     disabled="@(_fieldResults is null || _mode != ObsMode.Profile)">
                 📌 @T("Zapisz do porównania", "Save to Comparison")
@@ -496,160 +500,164 @@
             </div>
         }
 
-        @if (_exposureData is not null)
-        {
-            <div class="section-card mb-3">
-                <div class="section-header">
-                    <h5 class="mb-0">
-                        @T("Wyniki ekspozycji", "Exposure Results")
-                        <span class="text-muted fw-normal fs-6"> — T=@_exposureTimeHours h, p=@_exponentP</span>
-                    </h5>
-                    <div class="ms-auto d-flex gap-2 align-items-center">
-                        @if (_mode == ObsMode.Profile)
-                        {
-                            <div class="view-toggle">
-                                <button class="toggle-btn @(_exposureResultView == ResultView.Charts ? "active" : "")"
-                                        @onclick="() => _exposureResultView = ResultView.Charts">
-                                    📊 @T("Wykresy", "Charts")
-                                </button>
-                                <button class="toggle-btn @(_exposureResultView == ResultView.Table ? "active" : "")"
-                                        @onclick="() => _exposureResultView = ResultView.Table">
-                                    ⊞ @T("Tabela", "Table")
-                                </button>
-                            </div>
-                        }
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="ExportExposureResultsCsv" title="@T("Eksportuj wyniki do CSV", "Export results to CSV")">
-                            ⬇ @T("Eksport CSV", "Export CSV")
-                        </button>
-                    </div>
-                </div>
-                <div class="section-body">
-                    @if (_mode == ObsMode.SinglePoint && _exposureData.Count == 1)
+
+
+    </div><!-- /results-col -->
+
+    @*
+    @if (_exposureData is not null)
+    {
+        <div class="section-card mb-3">
+            <div class="section-header">
+                <h5 class="mb-0">
+                    @T("Wyniki ekspozycji", "Exposure Results")
+                    <span class="text-muted fw-normal fs-6"> — T=@_exposureTimeHours h, p=@_exponentP</span>
+                </h5>
+                <div class="ms-auto d-flex gap-2 align-items-center">
+                    @if (_mode == ObsMode.Profile)
                     {
-                        var d = _exposureData[0];
-                        <table class="table table-sm table-bordered" style="max-width:540px">
-                            <tbody>
-                                <tr><th colspan="2" class="table-light">
-                                    @T("Punkt", "Point") (@d.Point.X.ToString("F2") m, @d.Point.Y.ToString("F2") m)
-                                </th></tr>
-                                <tr><td>E [kV/m]</td><td>@((d.EAverage / 1000).ToString("G4"))</td></tr>
-                                <tr><td>H [A/m]</td><td>@d.HAverage.ToString("G4")</td></tr>
-                                <tr><th colspan="2" class="table-light">@T("Dawka ekspozycji elektrycznej", "Electric exposure dose")</th></tr>
-                                <tr>
-                                    <td>EDEPE = E<sup>@_exponentP</sup> · T</td>
-                                    <td>@d.Edepe.ToString("G4") <span class="text-muted small">(V/m)<sup>@_exponentP</sup>·s</span></td>
-                                </tr>
-                                <tr><td>E<sub>eq</sub> = (EDEPE / T)<sup>1/p</sup> [kV/m]</td><td>@((d.EEquivalent / 1000).ToString("G4"))</td></tr>
-                                <tr><td>E max / E min [kV/m]</td><td>@((d.EMax / 1000).ToString("G4")) / @((d.EMin / 1000).ToString("G4"))</td></tr>
-                                <tr><th colspan="2" class="table-light">@T("Dawka ekspozycji magnetycznej (H)", "Magnetic exposure dose (H)")</th></tr>
-                                <tr>
-                                    <td>EDEPM<sub>H</sub> = H<sup>@_exponentP</sup> · T</td>
-                                    <td>@d.EdepmH.ToString("G4") <span class="text-muted small">(A/m)<sup>@_exponentP</sup>·s</span></td>
-                                </tr>
-                                <tr><td>H<sub>eq</sub> = (EDEPM<sub>H</sub> / T)<sup>1/p</sup> [A/m]</td><td>@d.HEquivalent.ToString("G4")</td></tr>
-                                <tr><td>H max / H min [A/m]</td><td>@d.HMax.ToString("G4") / @d.HMin.ToString("G4")</td></tr>
-                                <tr><td class="text-muted small" colspan="2">
-                                    @T("Dla stałego pola: E_eq = E_avg = E_max = E_min (analogicznie dla H).",
-                                       "For constant fields: E_eq = E_avg = E_max = E_min (and same for H).")
-                                </td></tr>
-                            </tbody>
-                        </table>
+                        <div class="view-toggle">
+                            <button class="toggle-btn @(_exposureResultView == ResultView.Charts ? "active" : "")"
+                                    @onclick="() => _exposureResultView = ResultView.Charts">
+                                📊 @T("Wykresy", "Charts")
+                            </button>
+                            <button class="toggle-btn @(_exposureResultView == ResultView.Table ? "active" : "")"
+                                    @onclick="() => _exposureResultView = ResultView.Table">
+                                ⊞ @T("Tabela", "Table")
+                            </button>
+                        </div>
+                    }
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="ExportExposureResultsCsv" title="@T("Eksportuj wyniki do CSV", "Export results to CSV")">
+                        ⬇ @T("Eksport CSV", "Export CSV")
+                    </button>
+                </div>
+            </div>
+            <div class="section-body">
+                @if (_mode == ObsMode.SinglePoint && _exposureData.Count == 1)
+                {
+                    var d = _exposureData[0];
+                    <table class="table table-sm table-bordered" style="max-width:540px">
+                        <tbody>
+                            <tr><th colspan="2" class="table-light">
+                                @T("Punkt", "Point") (@d.Point.X.ToString("F2") m, @d.Point.Y.ToString("F2") m)
+                            </th></tr>
+                            <tr><td>E [kV/m]</td><td>@((d.EAverage / 1000).ToString("G4"))</td></tr>
+                            <tr><td>H [A/m]</td><td>@d.HAverage.ToString("G4")</td></tr>
+                            <tr><th colspan="2" class="table-light">@T("Dawka ekspozycji elektrycznej", "Electric exposure dose")</th></tr>
+                            <tr>
+                                <td>EDEPE = E<sup>@_exponentP</sup> · T</td>
+                                <td>@d.Edepe.ToString("G4") <span class="text-muted small">(V/m)<sup>@_exponentP</sup>·s</span></td>
+                            </tr>
+                            <tr><td>E<sub>eq</sub> = (EDEPE / T)<sup>1/p</sup> [kV/m]</td><td>@((d.EEquivalent / 1000).ToString("G4"))</td></tr>
+                            <tr><td>E max / E min [kV/m]</td><td>@((d.EMax / 1000).ToString("G4")) / @((d.EMin / 1000).ToString("G4"))</td></tr>
+                            <tr><th colspan="2" class="table-light">@T("Dawka ekspozycji magnetycznej (H)", "Magnetic exposure dose (H)")</th></tr>
+                            <tr>
+                                <td>EDEPM<sub>H</sub> = H<sup>@_exponentP</sup> · T</td>
+                                <td>@d.EdepmH.ToString("G4") <span class="text-muted small">(A/m)<sup>@_exponentP</sup>·s</span></td>
+                            </tr>
+                            <tr><td>H<sub>eq</sub> = (EDEPM<sub>H</sub> / T)<sup>1/p</sup> [A/m]</td><td>@d.HEquivalent.ToString("G4")</td></tr>
+                            <tr><td>H max / H min [A/m]</td><td>@d.HMax.ToString("G4") / @d.HMin.ToString("G4")</td></tr>
+                            <tr><td class="text-muted small" colspan="2">
+                                @T("Dla stałego pola: E_eq = E_avg = E_max = E_min (analogicznie dla H).",
+                                   "For constant fields: E_eq = E_avg = E_max = E_min (and same for H).")
+                            </td></tr>
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    @if (_exposureResultView == ResultView.Charts)
+                    {
+                        <div class="row g-3">
+                            <div class="col-12 col-xl-6">
+                                <p class="chart-title" style="color:#6a1b9a">
+                                    ● EDEPE @T("wzdłuż profilu", "over Distance") (p=@_exponentP, T=@_exposureTimeHours h)
+                                </p>
+                                <RadzenChart Style="height:340px">
+                                    <RadzenChartTooltipOptions Shared="true" />
+                                    <RadzenLineSeries Data="@_edepePlotData" CategoryProperty="X" ValueProperty="Y"
+                                                      Title="EDEPE" Smooth="true" Stroke="#6a1b9a" StrokeWidth="2">
+                                        <ChildContent>
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </ChildContent>
+                                        <TooltipTemplate Context="data">
+                                            <div>X: @data.X.ToString("F3") m<br />EDEPE: @data.Y.ToString("G4") (V/m)^p·s</div>
+                                        </TooltipTemplate>
+                                    </RadzenLineSeries>
+                                    <RadzenCategoryAxis Min="@XAxisMin" Max="@XAxisMax" Step="@XAxisStep" FormatString="{0:F0}">
+                                        <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
+                                        <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
+                                    </RadzenCategoryAxis>
+                                    <RadzenValueAxis Min="0" Max="@EdepePlotMax" Step="@EdepePlotStep" Formatter="@FormatAxisValue">
+                                        <RadzenAxisTitle Text="(V/m)^p·s" />
+                                        <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
+                                    </RadzenValueAxis>
+                                </RadzenChart>
+                            </div>
+                            <div class="col-12 col-xl-6">
+                                <p class="chart-title" style="color:#bf360c">
+                                    ● EDEPM<sub>H</sub> @T("wzdłuż profilu", "over Distance") (p=@_exponentP, T=@_exposureTimeHours h)
+                                </p>
+                                <RadzenChart Style="height:340px">
+                                    <RadzenChartTooltipOptions Shared="true" />
+                                    <RadzenLineSeries Data="@_medepmHPlotData" CategoryProperty="X" ValueProperty="Y"
+                                                      Title="EDEPM_H" Smooth="true" Stroke="#bf360c" StrokeWidth="2">
+                                        <ChildContent>
+                                            <RadzenMarkers MarkerType="MarkerType.None" />
+                                        </ChildContent>
+                                        <TooltipTemplate Context="data">
+                                            X: @data.X.ToString("F3") m<br />Y: @data.Y.ToString("G4") (A/m)^p·s
+                                        </TooltipTemplate>
+                                    </RadzenLineSeries>
+                                    <RadzenCategoryAxis Min="@XAxisMin" Max="@XAxisMax" Step="@XAxisStep" FormatString="{0:F0}">
+                                        <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
+                                        <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
+                                    </RadzenCategoryAxis>
+                                    <RadzenValueAxis Min="0" Max="@MedepmHPlotMax" Step="@MedepmHPlotStep" Formatter="@FormatAxisValue">
+                                        <RadzenAxisTitle Text="(A/m)^p·s" />
+                                        <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
+                                    </RadzenValueAxis>
+                                </RadzenChart>
+                            </div>
+                        </div>
                     }
                     else
                     {
-                        @if (_exposureResultView == ResultView.Charts)
-                        {
-                            <div class="row g-3">
-                                <div class="col-12 col-xl-6">
-                                    <p class="chart-title" style="color:#6a1b9a">
-                                        ● EDEPE @T("wzdłuż profilu", "over Distance") (p=@_exponentP, T=@_exposureTimeHours h)
-                                    </p>
-                                    <RadzenChart Style="height:340px">
-                                        <RadzenChartTooltipOptions Shared="true" />
-                                        <RadzenLineSeries Data="@_edepePlotData" CategoryProperty="X" ValueProperty="Y"
-                                                          Title="EDEPE" Smooth="true" Stroke="#6a1b9a" StrokeWidth="2">
-                                            <ChildContent>
-                                                <RadzenMarkers MarkerType="MarkerType.None" />
-                                            </ChildContent>
-                                            <TooltipTemplate Context="data">
-                                                <div>X: @data.X.ToString("F3") m<br />EDEPE: @data.Y.ToString("G4") (V/m)^p·s</div>
-                                            </TooltipTemplate>
-                                        </RadzenLineSeries>
-                                        <RadzenCategoryAxis Min="@XAxisMin" Max="@XAxisMax" Step="@XAxisStep" FormatString="{0:F0}">
-                                            <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
-                                            <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
-                                        </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@EdepePlotMax" Step="@EdepePlotStep" Formatter="@FormatAxisValue">
-                                            <RadzenAxisTitle Text="(V/m)^p·s" />
-                                            <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
-                                        </RadzenValueAxis>
-                                    </RadzenChart>
-                                </div>
-                                <div class="col-12 col-xl-6">
-                                    <p class="chart-title" style="color:#bf360c">
-                                        ● EDEPM<sub>H</sub> @T("wzdłuż profilu", "over Distance") (p=@_exponentP, T=@_exposureTimeHours h)
-                                    </p>
-                                    <RadzenChart Style="height:340px">
-                                        <RadzenChartTooltipOptions Shared="true" />
-                                        <RadzenLineSeries Data="@_medepmHPlotData" CategoryProperty="X" ValueProperty="Y"
-                                                          Title="EDEPM_H" Smooth="true" Stroke="#bf360c" StrokeWidth="2">
-                                            <ChildContent>
-                                                <RadzenMarkers MarkerType="MarkerType.None" />
-                                            </ChildContent>
-                                            <TooltipTemplate Context="data">
-                                                X: @data.X.ToString("F3") m<br />Y: @data.Y.ToString("G4") (A/m)^p·s
-                                            </TooltipTemplate>
-                                        </RadzenLineSeries>
-                                        <RadzenCategoryAxis Min="@XAxisMin" Max="@XAxisMax" Step="@XAxisStep" FormatString="{0:F0}">
-                                            <RadzenGridLines Visible="true" Stroke="#e8ecf0" StrokeWidth="1" />
-                                            <RadzenAxisTitle Text="@T("Odległość od osi linii [m]", "Distance from centre line [m]")" />
-                                        </RadzenCategoryAxis>
-                                        <RadzenValueAxis Min="0" Max="@MedepmHPlotMax" Step="@MedepmHPlotStep" Formatter="@FormatAxisValue">
-                                            <RadzenAxisTitle Text="(A/m)^p·s" />
-                                            <RadzenGridLines Visible="true" Stroke="#d0d9e0" StrokeWidth="1" />
-                                        </RadzenValueAxis>
-                                    </RadzenChart>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered table-hover">
-                                    <thead class="table-light">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>x [m]</th>
+                                        <th>E<sub>@T("śr", "avg")</sub> [kV/m]</th>
+                                        <th>H<sub>@T("śr", "avg")</sub> [A/m]</th>
+                                        <th>EDEPE<br /><small class="text-muted">E<sup>p</sup>·T</small></th>
+                                        <th>EDEPM<sub>H</sub><br /><small class="text-muted">H<sup>p</sup>·T</small></th>
+                                        <th>E<sub>eq</sub> [kV/m]</th>
+                                        <th>H<sub>eq</sub> [A/m]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var d in _exposureData)
+                                    {
                                         <tr>
-                                            <th>x [m]</th>
-                                            <th>E<sub>@T("śr", "avg")</sub> [kV/m]</th>
-                                            <th>H<sub>@T("śr", "avg")</sub> [A/m]</th>
-                                            <th>EDEPE<br /><small class="text-muted">E<sup>p</sup>·T</small></th>
-                                            <th>EDEPM<sub>H</sub><br /><small class="text-muted">H<sup>p</sup>·T</small></th>
-                                            <th>E<sub>eq</sub> [kV/m]</th>
-                                            <th>H<sub>eq</sub> [A/m]</th>
+                                            <td>@d.Point.X.ToString("F1")</td>
+                                            <td>@((d.EAverage / 1000).ToString("G4"))</td>
+                                            <td>@d.HAverage.ToString("G4")</td>
+                                            <td>@d.Edepe.ToString("G4")</td>
+                                            <td>@d.EdepmH.ToString("G4")</td>
+                                            <td>@((d.EEquivalent / 1000).ToString("G4"))</td>
+                                            <td>@d.HEquivalent.ToString("G4")</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var d in _exposureData)
-                                        {
-                                            <tr>
-                                                <td>@d.Point.X.ToString("F1")</td>
-                                                <td>@((d.EAverage / 1000).ToString("G4"))</td>
-                                                <td>@d.HAverage.ToString("G4")</td>
-                                                <td>@d.Edepe.ToString("G4")</td>
-                                                <td>@d.EdepmH.ToString("G4")</td>
-                                                <td>@((d.EEquivalent / 1000).ToString("G4"))</td>
-                                                <td>@d.HEquivalent.ToString("G4")</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
-                </div>
+                }
             </div>
-        }
-
-    </div><!-- /results-col -->
+        </div>
+    }
+    *@
 
     @if (_savedScenarios.Count > 0)
     {
@@ -816,10 +824,13 @@
                         <span class="config-value">[@_profXMin, @_profXMax] m × @_profSteps @T("pkt", "pts")</span>
                     </div>
                 }
+
+                @*
                 <div class="config-row">
                     <span class="config-label">@T("Czas ekspozycji", "Exposure time")</span>
                     <span class="config-value">@_exposureTimeHours h (p=@_exponentP)</span>
                 </div>
+                *@
                 @if (_conductors.Any())
                 {
                     <div class="config-row">
